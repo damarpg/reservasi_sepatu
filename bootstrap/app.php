@@ -12,10 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         
-        // Mendaftarkan alias middleware agar bisa dipanggil di routes/web.php
+        // 1. Mendaftarkan alias middleware (Owner & Admin)
         $middleware->alias([
             'isOwner' => \App\Http\Middleware\EnsureUserIsOwner::class,
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
+        ]);
+
+        // 2. Mengecualikan route Midtrans dari pengecekan CSRF
+        // Agar Midtrans bisa mengirim data 'Paid' ke website kamu
+        $middleware->validateCsrfTokens(except: [
+            'midtrans/callback', 
         ]);
 
     })
