@@ -274,10 +274,14 @@
     <div class="row mb-4 justify-content-center">
         @foreach($services as $s)
         <div class="col-md-4 mb-4">
-            <div class="card price-card p-4 text-center shadow-sm">
+            <div class="card price-card p-4 text-center shadow-sm {{ $s->kuota <= 0 ? 'opacity-50' : '' }}">
                 <h4 class="fw-bold">{{ $s->nama_layanan }}</h4>
                 <div class="h5 fw-bold text-brown">Rp {{ number_format($s->harga, 0, ',', '.') }}</div>
-                <p class="text-muted small">Kuota: <strong>{{ $s->kuota }}</strong></p>
+                @if($s->kuota > 0)
+                    <p class="text-muted small">Kuota Tersisa: <strong>{{ $s->kuota }}</strong></p>
+                @else
+                    <p class="text-danger small fw-bold">Kuota Habis Hari Ini</p>
+                @endif
             </div>
         </div>
         @endforeach
@@ -293,7 +297,9 @@
                             <label class="small fw-bold">Pilih Layanan</label>
                             <select id="calc-service" class="form-select form-select-sm shadow-none border-secondary">
                                 @foreach($services as $s)
-                                    <option value="{{ $s->harga }}">{{ $s->nama_layanan }} - Rp {{ number_format($s->harga, 0, ',', '.') }}</option>
+                                    @if($s->kuota > 0)
+                                        <option value="{{ $s->harga }}">{{ $s->nama_layanan }} - Rp {{ number_format($s->harga, 0, ',', '.') }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                         </div>
@@ -357,7 +363,9 @@
                                 <label class="form-label fw-bold small">Paket Layanan</label>
                                 <select name="service_id" class="form-select" required>
                                     @foreach($services as $s)
-                                        <option value="{{ $s->id }}" {{ old('service_id') == $s->id ? 'selected' : '' }}>{{ $s->nama_layanan }}</option>
+                                        <option value="{{ $s->id }}" {{ old('service_id') == $s->id ? 'selected' : '' }} {{ $s->kuota <= 0 ? 'disabled' : '' }}>
+                                            {{ $s->nama_layanan }} {{ $s->kuota <= 0 ? '(PENUH)' : '' }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -475,7 +483,7 @@
     <div class="row text-center mb-4 mt-5">
         <div class="col-12">
             <h2 class="fw-bold">Lokasi Workshop</h2>
-            <div class="map-container mt-4"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.574635670868!2d112.71536761477508!3d-7.289139994738879!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwMTcnMjAuOSJTIDExMsKwNDInNTUuMyJF!5e0!3m2!1sid!2sid!4v1650000000000!5m2!1sid!2sid" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
+            <div class="map-container mt-4"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.514681657095!2d112.71618347570498!3d-7.295914692711585!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fb9036c84147%3A0x6e9a8f276228399e!2sNature%20Clean%20Premium%20Treatment!5e0!3m2!1sen!2sid!4v1700000000000" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
         </div>
     </div>
 </div>
@@ -512,8 +520,8 @@
         const qty = parseInt(calcQty.value) || 0;
         calcTotalDisplay.innerText = 'Rp ' + (price * qty).toLocaleString('id-ID');
     }
-    calcService.addEventListener('change', calculate);
-    calcQty.addEventListener('input', calculate);
+    if(calcService) calcService.addEventListener('change', calculate);
+    if(calcQty) calcQty.addEventListener('input', calculate);
     window.addEventListener('load', calculate);
 
     const slider = document.getElementById('ba-slider');

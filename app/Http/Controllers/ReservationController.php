@@ -85,13 +85,10 @@ class ReservationController extends Controller
         $service = Service::findOrFail($request->service_id);
         $tanggal = $request->tanggal_reservasi ?? Carbon::today()->format('Y-m-d');
 
-        $totalSepatuTerdaftar = Reservation::where('tanggal_reservasi', $tanggal)
-                                            ->where('status', '!=', 'batal')
-                                            ->sum('jumlah_sepatu');
-
-        if (($totalSepatuTerdaftar + $request->jumlah_sepatu) > $service->kuota) {
+        // Cek kuota yang tersisa langsung dari database (field kuota di tabel services)
+        if ($service->kuota < $request->jumlah_sepatu) {
             return redirect()->back()
-                ->with('error', 'Maaf, kuota penuh. Sisa: ' . ($service->kuota - $totalSepatuTerdaftar))
+                ->with('error', 'Maaf, kuota tidak mencukupi. Sisa kuota saat ini: ' . $service->kuota)
                 ->withInput();
         }
 
@@ -113,6 +110,9 @@ class ReservationController extends Controller
                 'status'            => 'pending',
                 'status_pembayaran' => 'unpaid',
             ]);
+
+            // PENTING: Kurangi kuota di tabel services
+            $service->decrement('kuota', $request->jumlah_sepatu);
 
             $params = [
                 'transaction_details' => [
@@ -206,10 +206,16 @@ class ReservationController extends Controller
     public function destroy($id)
     {
         $res = Reservation::findOrFail($id);
+
+        // Tambahkan pengembalian kuota jika data dihapus (opsional tapi disarankan)
+        if ($res->service) {
+            $res->service->increment('kuota', $res->jumlah_sepatu);
+        }
+
         if($res->photo_before) Storage::disk('public')->delete($res->photo_before);
         if($res->photo_after) Storage::disk('public')->delete($res->photo_after);
         $res->delete();
-        return redirect()->back()->with('success', 'Data dihapus.');
+        return redirect()->back()->with('success', 'Data dihapus dan kuota dikembalikan.');
     }
 
     // --- SERVICE & EXPENSE ---
