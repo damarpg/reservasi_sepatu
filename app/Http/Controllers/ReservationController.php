@@ -24,6 +24,41 @@ class ReservationController extends Controller
         Config::$is3ds = true;
     }
 
+    /**
+     * INTEGRASI MIDTRANS CALLBACK
+     * Menangani notifikasi otomatis dari Midtrans saat pembayaran selesai
+     */
+    public function callback(Request $request)
+    {
+        // Ambil Server Key dari config atau .env
+        $serverKey = env('MIDTRANS_SERVER_KEY');
+        
+        // Buat Signature Key untuk memverifikasi bahwa data asli dari Midtrans
+        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+
+        if ($hashed == $request->signature_key) {
+            // Jika status transaksi adalah settlement (berhasil) atau capture (kartu kredit)
+            if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
+                
+                // Cari data reservasi berdasarkan Order ID yang dikirim Midtrans
+                // Contoh order_id: NC-5-1775435253, kita ambil ID aslinya (angka 5)
+                $orderParts = explode('-', $request->order_id);
+                $reservationId = $orderParts[1] ?? null;
+
+                $order = Reservation::find($reservationId);
+                
+                if ($order) {
+                    $order->update([
+                        'status_pembayaran' => 'Paid' // Pastikan nama kolom di database Anda 'status_pembayaran'
+                    ]);
+                    return response()->json(['status' => 'OK'], 200);
+                }
+            }
+        }
+
+        return response()->json(['status' => 'Signature Invalid'], 403);
+    }
+
     // --- HALAMAN PELANGGAN ---
 
     public function index()
@@ -78,7 +113,7 @@ class ReservationController extends Controller
                 'alamat'            => $request->alamat,
                 'total_harga'       => $totalHarga,
                 'status'            => 'pending',
-                'status_pembayaran' => 'unpaid', // Pastikan kolom ini ada di migrasi
+                'status_pembayaran' => 'unpaid',
             ]);
 
             // Integrasi Midtrans
@@ -94,8 +129,6 @@ class ReservationController extends Controller
             ];
 
             $snapToken = Snap::getSnapToken($params);
-            
-            // Kita arahkan ke halaman pembayaran yang sudah kita buat tadi
             return view('pembayaran', compact('snapToken', 'reservasi'));
             
         } catch (\Exception $e) {
@@ -114,7 +147,6 @@ class ReservationController extends Controller
             $res->status = $request->status;
         }
 
-        // Upload Foto
         if ($request->hasFile('photo_before')) {
             if ($res->photo_before) Storage::disk('public')->delete($res->photo_before);
             $res->photo_before = $request->file('photo_before')->store('progress', 'public');
@@ -127,7 +159,6 @@ class ReservationController extends Controller
 
         $res->save();
 
-        // JIKA STATUS BERUBAH KE SELESAI, KIRIM WA VIA FONNTE
         if ($oldStatus !== 'selesai' && $res->status === 'selesai') {
             $this->sendWhatsappFonnte($res);
         }
@@ -138,9 +169,8 @@ class ReservationController extends Controller
     private function sendWhatsappFonnte($res)
     {
         $token = env('FONNTE_TOKEN');
-        $message = "Halo *{$res->nama_pelanggan}*,\n\nKabar gembira! Sepatu Anda dengan nomor antrian *#{$res->id}* telah *SELESAI* dikerjakan ✨\n\nSilakan diambil di workshop kami atau tunggu kurir kami mengantarkannya.\n\nTerima kasih telah menggunakan jasa Nature Clean!";
+        $message = "Halo *{$res->nama_pelanggan}*,\n\nSepatu Anda dengan nomor antrian *#{$res->id}* telah *SELESAI* ✨\n\nSilakan diambil di workshop kami.\n\nTerima kasih!";
 
-        // Kirim request ke API Fonnte
         Http::withHeaders([
             'Authorization' => $token,
         ])->post('https://api.fonnte.com/send', [
@@ -149,14 +179,9 @@ class ReservationController extends Controller
         ]);
     }
 
-    // --- SISANYA TETAP SAMA (Service, Expense, Owner Dashboard) ---
-
     public function storeReview(Request $request, $id)
     {
-        $request->validate([
-            'rating'    => 'required|integer|min:1|max:5',
-            'testimoni' => 'required|string|max:500',
-        ]);
+        $request->validate(['rating' => 'required|integer|min:1|max:5', 'testimoni' => 'required|string|max:500']);
         $res = Reservation::findOrFail($id);
         if ($res->status !== 'selesai') return redirect()->back()->with('error', 'Belum selesai.');
         if ($res->rating) return redirect()->back()->with('error', 'Sudah memberi ulasan.');
