@@ -41,21 +41,25 @@ class ReservationController extends Controller
             if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
                 
                 // Cari data reservasi berdasarkan Order ID yang dikirim Midtrans
-                // Contoh order_id: NC-5-1775435253, kita ambil ID aslinya (angka 5)
+                // Pemisahan ID: NC-7-TIMESTAMP -> Mengambil angka 7
                 $orderParts = explode('-', $request->order_id);
                 $reservationId = $orderParts[1] ?? null;
 
                 $order = Reservation::find($reservationId);
                 
                 if ($order) {
+                    // Update status pembayaran menjadi Paid
                     $order->update([
-                        'status_pembayaran' => 'Paid' // Pastikan nama kolom di database Anda 'status_pembayaran'
+                        'status_pembayaran' => 'Paid'
                     ]);
+                    
+                    // Response sukses ke Midtrans (agar tidak dikirim ulang notification-nya)
                     return response()->json(['status' => 'OK'], 200);
                 }
             }
         }
 
+        // Jika signature tidak cocok
         return response()->json(['status' => 'Signature Invalid'], 403);
     }
 
@@ -100,7 +104,7 @@ class ReservationController extends Controller
         $totalHarga = ($request->jumlah_sepatu * $service->harga) + $biayaAntarJemput;
 
         try {
-            // Simpan Data
+            // Simpan Data ke Database terlebih dahulu
             $reservasi = Reservation::create([
                 'nama_pelanggan'    => $request->nama_pelanggan,
                 'nomor_wa'          => $request->nomor_wa,
@@ -116,7 +120,7 @@ class ReservationController extends Controller
                 'status_pembayaran' => 'unpaid',
             ]);
 
-            // Integrasi Midtrans
+            // Integrasi Midtrans - Menggunakan ID Reservasi di Order ID
             $params = [
                 'transaction_details' => [
                     'order_id' => 'NC-' . $reservasi->id . '-' . time(),
@@ -132,7 +136,7 @@ class ReservationController extends Controller
             return view('pembayaran', compact('snapToken', 'reservasi'));
             
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Gagal memproses pembayaran: ' . $e->getMessage())->withInput();
         }
     }
 
