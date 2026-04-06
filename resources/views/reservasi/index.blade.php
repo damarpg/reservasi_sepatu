@@ -315,56 +315,75 @@
 
     <div id="booking" class="row justify-content-center mb-5 pt-5">
         <div class="col-lg-7">
+
+            @if ($errors->any())
+                <div class="alert alert-danger shadow-sm border-0 mb-4" style="border-radius: 15px;">
+                    <ul class="mb-0 small fw-bold">
+                        @foreach ($errors->all() as $error)
+                            <li><i class="fas fa-exclamation-circle me-2"></i>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger shadow-sm border-0 mb-4" style="border-radius: 15px;">
+                    <p class="mb-0 small fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}</p>
+                </div>
+            @endif
             <div class="card card-form">
                 <div class="p-4 text-center bg-dark text-white" style="border-radius: 25px 25px 0 0;">
                     <h4 class="mb-0 fw-bold">Booking Reservasi</h4>
                 </div>
                 <div class="card-body p-4 p-md-5">
                     @if(session('success')) 
-                        <div class="alert alert-success border-0 shadow-sm mb-4">{{ session('success') }}</div> 
+                        <div class="alert alert-success border-0 shadow-sm mb-4" style="border-radius: 15px;">
+                            <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+                        </div> 
                     @endif
+                    
                     <form action="{{ route('reservasi.store') }}" method="POST">
                         @csrf
                         <div class="mb-3">
                             <label class="form-label fw-bold small">Nama Lengkap</label>
-                            <input type="text" name="nama_pelanggan" class="form-control" required>
+                            <input type="text" name="nama_pelanggan" class="form-control" value="{{ old('nama_pelanggan') }}" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small">WhatsApp</label>
-                            <input type="text" name="nomor_wa" class="form-control" required>
+                            <label class="form-label fw-bold small">WhatsApp (Gunakan format 08/62)</label>
+                            <input type="text" name="nomor_wa" class="form-control" value="{{ old('nomor_wa') }}" placeholder="Contoh: 0812..." required>
                         </div>
                         <div class="row">
                             <div class="col-md-7 mb-3">
                                 <label class="form-label fw-bold small">Paket Layanan</label>
                                 <select name="service_id" class="form-select" required>
                                     @foreach($services as $s)
-                                        <option value="{{ $s->id }}">{{ $s->nama_layanan }}</option>
+                                        <option value="{{ $s->id }}" {{ old('service_id') == $s->id ? 'selected' : '' }}>{{ $s->nama_layanan }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-5 mb-3">
                                 <label class="form-label fw-bold small">Jumlah (Pasang)</label>
-                                <input type="number" name="jumlah_sepatu" class="form-control" min="1" value="1">
+                                <input type="number" name="jumlah_sepatu" class="form-control" min="1" value="{{ old('jumlah_sepatu', 1) }}">
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold small">Metode Penyerahan</label>
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <input type="radio" class="form-check-input d-none" name="tipe_pengiriman" id="d1" value="antar_sendiri" checked onclick="toggleMetode('toko')">
+                                    <input type="radio" class="form-check-input d-none" name="tipe_pengiriman" id="d1" value="antar_sendiri" {{ old('tipe_pengiriman', 'antar_sendiri') == 'antar_sendiri' ? 'checked' : '' }} onclick="toggleMetode('toko')">
                                     <label class="delivery-option text-center" for="d1"><i class="fas fa-store d-block mb-1"></i> <span class="small">Drop ke Toko</span></label>
                                 </div>
                                 <div class="col-6">
-                                    <input type="radio" class="form-check-input d-none" name="tipe_pengiriman" id="d2" value="antar_jemput" onclick="toggleMetode('jemput')">
+                                    <input type="radio" class="form-check-input d-none" name="tipe_pengiriman" id="d2" value="antar_jemput" {{ old('tipe_pengiriman') == 'antar_jemput' ? 'checked' : '' }} onclick="toggleMetode('jemput')">
                                     <label class="delivery-option text-center" for="d2"><i class="fas fa-truck d-block mb-1"></i> <span class="small">Antar Jemput</span></label>
                                 </div>
                             </div>
                         </div>
-                        <div id="info-toko-box" class="p-3 mb-4">
+                        <div id="info-toko-box" class="p-3 mb-4 {{ old('tipe_pengiriman') == 'antar_jemput' ? 'd-none' : '' }}">
                             <p class="mb-0 small text-muted text-center">Dukuh Kupang 17 Nomor 35, Surabaya</p>
                         </div>
-                        <div id="alamat-section" class="mb-4 d-none">
-                            <textarea id="textarea-alamat" name="alamat" class="form-control" rows="3" placeholder="Alamat lengkap penjemputan..."></textarea>
+                        <div id="alamat-section" class="mb-4 {{ old('tipe_pengiriman') == 'antar_jemput' ? '' : 'd-none' }}">
+                            <textarea id="textarea-alamat" name="alamat" class="form-control" rows="3" placeholder="Alamat lengkap penjemputan...">{{ old('alamat') }}</textarea>
                         </div>
                         <button type="submit" class="btn btn-dark w-100 py-3 fw-bold rounded-pill">KIRIM PESANAN <i class="fas fa-paper-plane ms-2"></i></button>
                     </form>
@@ -372,7 +391,6 @@
             </div>
         </div>
     </div>
-
     <div class="row text-center mb-4 mt-5">
         <div class="col-12">
             <h2 class="fw-bold">Testimoni Pelanggan</h2>
@@ -457,7 +475,7 @@
     <div class="row text-center mb-4 mt-5">
         <div class="col-12">
             <h2 class="fw-bold">Lokasi Workshop</h2>
-            <div class="map-container mt-4"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.6543210987!2d112.712345!3d-7.284567!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwMTcnMDQuNCJTIDExMsKwNDInNDQuNCJF!5e0!3m2!1sid!2sid!4v1700000000000!5m2!1sid!2sid" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
+            <div class="map-container mt-4"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.574635670868!2d112.71536761477508!3d-7.289139994738879!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwMTcnMjAuOSJTIDExMsKwNDInNTUuMyJF!5e0!3m2!1sid!2sid!4v1650000000000!5m2!1sid!2sid" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
         </div>
     </div>
 </div>
