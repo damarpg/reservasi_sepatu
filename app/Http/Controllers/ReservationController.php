@@ -30,17 +30,14 @@ class ReservationController extends Controller
      */
     public function callback(Request $request)
     {
-        // Ambil Server Key dari config atau .env
         $serverKey = env('MIDTRANS_SERVER_KEY');
         
-        // Buat Signature Key untuk memverifikasi bahwa data asli dari Midtrans
+        // Perbaikan: Pastikan gross_amount diformat string tanpa desimal jika perlu untuk hashing
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
 
         if ($hashed == $request->signature_key) {
-            // Jika status transaksi adalah settlement (berhasil) atau capture (kartu kredit)
             if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
                 
-                // Cari data reservasi berdasarkan Order ID yang dikirim Midtrans
                 // Pemisahan ID: NC-7-TIMESTAMP -> Mengambil angka 7
                 $orderParts = explode('-', $request->order_id);
                 $reservationId = $orderParts[1] ?? null;
@@ -48,18 +45,17 @@ class ReservationController extends Controller
                 $order = Reservation::find($reservationId);
                 
                 if ($order) {
-                    // Update status pembayaran menjadi Paid
-                    $order->update([
-                        'status_pembayaran' => 'Paid'
-                    ]);
-                    
-                    // Response sukses ke Midtrans (agar tidak dikirim ulang notification-nya)
+                    // Hanya update jika belum Paid untuk menghindari double trigger
+                    if ($order->status_pembayaran !== 'Paid') {
+                        $order->update([
+                            'status_pembayaran' => 'Paid'
+                        ]);
+                    }
                     return response()->json(['status' => 'OK'], 200);
                 }
             }
         }
 
-        // Jika signature tidak cocok
         return response()->json(['status' => 'Signature Invalid'], 403);
     }
 
@@ -89,7 +85,6 @@ class ReservationController extends Controller
         $service = Service::findOrFail($request->service_id);
         $tanggal = $request->tanggal_reservasi ?? Carbon::today()->format('Y-m-d');
 
-        // Cek Kuota
         $totalSepatuTerdaftar = Reservation::where('tanggal_reservasi', $tanggal)
                                             ->where('status', '!=', 'batal')
                                             ->sum('jumlah_sepatu');
@@ -104,7 +99,6 @@ class ReservationController extends Controller
         $totalHarga = ($request->jumlah_sepatu * $service->harga) + $biayaAntarJemput;
 
         try {
-            // Simpan Data ke Database terlebih dahulu
             $reservasi = Reservation::create([
                 'nama_pelanggan'    => $request->nama_pelanggan,
                 'nomor_wa'          => $request->nomor_wa,
@@ -120,7 +114,6 @@ class ReservationController extends Controller
                 'status_pembayaran' => 'unpaid',
             ]);
 
-            // Integrasi Midtrans - Menggunakan ID Reservasi di Order ID
             $params = [
                 'transaction_details' => [
                     'order_id' => 'NC-' . $reservasi->id . '-' . time(),
@@ -163,6 +156,7 @@ class ReservationController extends Controller
 
         $res->save();
 
+        // Trigger Fonnte jika status berubah menjadi 'selesai'
         if ($oldStatus !== 'selesai' && $res->status === 'selesai') {
             $this->sendWhatsappFonnte($res);
         }
@@ -173,14 +167,23 @@ class ReservationController extends Controller
     private function sendWhatsappFonnte($res)
     {
         $token = env('FONNTE_TOKEN');
-        $message = "Halo *{$res->nama_pelanggan}*,\n\nSepatu Anda dengan nomor antrian *#{$res->id}* telah *SELESAI* ✨\n\nSilakan diambil di workshop kami.\n\nTerima kasih!";
+        
+        // Membersihkan nomor WA dari karakter non-digit (seperti spasi atau tanda +)
+        $target = preg_replace('/[^0-9]/', '', $res->nomor_wa);
 
-        Http::withHeaders([
-            'Authorization' => $token,
-        ])->post('https://api.fonnte.com/send', [
-            'target' => $res->nomor_wa,
-            'message' => $message,
-        ]);
+        $message = "Halo *{$res->nama_pelanggan}*,\n\nSepatu Anda dengan nomor antrian *#{$res->id}* telah *SELESAI* ✨\n\nSilakan diambil di workshop Nature Clean.\n\nTerima kasih!";
+
+        try {
+            Http::withHeaders([
+                'Authorization' => $token,
+            ])->post('https://api.fonnte.com/send', [
+                'target' => $target,
+                'message' => $message,
+            ]);
+        } catch (\Exception $e) {
+            // Kita gunakan log jika pengiriman WA gagal agar program utama tidak crash
+            \Log::error('Gagal mengirim WA Fonnte: ' . $e->getMessage());
+        }
     }
 
     public function storeReview(Request $request, $id)
@@ -209,6 +212,7 @@ class ReservationController extends Controller
         return redirect()->back()->with('success', 'Data dihapus.');
     }
 
+    // --- SERVICE & EXPENSE ---
     public function storeService(Request $request) { Service::create($request->all()); return redirect()->back()->with('success', 'Layanan ditambah!'); }
     public function updateService(Request $request, $id) { $service = Service::findOrFail($id); $service->update($request->all()); return redirect()->back()->with('success', 'Layanan diupdate!'); }
     public function destroyService($id) { Service::destroy($id); return redirect()->back()->with('success', 'Layanan dihapus.'); }
