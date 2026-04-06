@@ -60,11 +60,22 @@
                             <div class="col-6">Total Harga:</div>
                             <div class="col-6 text-end fw-bold text-success">Rp {{ number_format($reservation->total_harga, 0, ',', '.') }}</div>
                         </div>
+
+                        <div class="row small text-muted mb-2">
+                            <div class="col-6">Status Pembayaran:</div>
+                            <div class="col-6 text-end">
+                                @if($reservation->status_pembayaran == 'Paid')
+                                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> LUNAS</span>
+                                @else
+                                    <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i> BELUM BAYAR</span>
+                                @endif
+                            </div>
+                        </div>
                         
                         <hr>
                         
                         <div class="text-center py-2">
-                            <p class="mb-1 small text-muted">Status Saat Ini:</p>
+                            <p class="mb-1 small text-muted">Status Pengerjaan:</p>
                             <h4 class="fw-bold text-uppercase" style="color: #6F4E37;">
                                 @if($reservation->status == 'pending') 🕒 PENDING
                                 @elseif($reservation->status == 'proses') ⚡ PROSES
