@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,10 +16,8 @@ Route::get('/', [ReservationController::class, 'index'])->name('reservasi.index'
 Route::post('/reservasi/store', [ReservationController::class, 'store'])->name('reservasi.store');
 
 /** * FITUR TRACKING (CEK STATUS)
- * Menggunakan nama 'reservasi.status' agar sinkron dengan form di index.blade.php
  */
 Route::get('/cek-status', [ReservationController::class, 'searchStatus'])->name('reservasi.status');
-// Alias 'reservasi.track' tetap disediakan jika ada bagian kode lain yang memanggilnya
 Route::get('/lacak-pesanan', [ReservationController::class, 'searchStatus'])->name('reservasi.track');
 
 /** * FITUR RATING & TESTIMONI
@@ -73,4 +72,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/download-pdf', [ReservationController::class, 'downloadPDF'])->name('owner.pdf');
     });
 
+});
+
+/**
+ * FIX GAMBAR 404 DI RAILWAY
+ * Jalankan route ini satu kali setelah deploy: domain.com/fix-storage
+ */
+Route::get('/fix-storage', function () {
+    try {
+        // Menghapus link lama jika ada
+        if (file_exists(public_path('storage'))) {
+            rmdir(public_path('storage'));
+        }
+        
+        // Membuat link baru
+        Artisan::call('storage:link');
+        
+        return "Berhasil! Storage link telah diperbarui. Silakan cek gambar kamu kembali.";
+    } catch (\Exception $e) {
+        return "Gagal: " . $e->getMessage();
+    }
 });
