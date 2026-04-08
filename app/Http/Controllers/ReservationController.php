@@ -26,36 +26,24 @@ class ReservationController extends Controller
 
     /**
      * INTEGRASI MIDTRANS CALLBACK
-     * Menangani notifikasi otomatis dari Midtrans saat pembayaran selesai
      */
     public function callback(Request $request)
     {
         $serverKey = env('MIDTRANS_SERVER_KEY');
-        
-        // Perbaikan: Pastikan gross_amount diformat string tanpa desimal jika perlu untuk hashing
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
 
         if ($hashed == $request->signature_key) {
             if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
-                
-                // Pemisahan ID: NC-7-TIMESTAMP -> Mengambil angka 7
                 $orderParts = explode('-', $request->order_id);
                 $reservationId = $orderParts[1] ?? null;
 
                 $order = Reservation::find($reservationId);
-                
-                if ($order) {
-                    // Hanya update jika belum Paid untuk menghindari double trigger
-                    if ($order->status_pembayaran !== 'Paid') {
-                        $order->update([
-                            'status_pembayaran' => 'Paid'
-                        ]);
-                    }
-                    return response()->json(['status' => 'OK'], 200);
+                if ($order && $order->status_pembayaran !== 'Paid') {
+                    $order->update(['status_pembayaran' => 'Paid']);
                 }
+                return response()->json(['status' => 'OK'], 200);
             }
         }
-
         return response()->json(['status' => 'Signature Invalid'], 403);
     }
 
@@ -64,10 +52,7 @@ class ReservationController extends Controller
     public function index()
     {
         $services = Service::all();
-        $latest_reservation = Reservation::whereNotNull('photo_before')
-                                        ->latest()
-                                        ->first();
-
+        $latest_reservation = Reservation::whereNotNull('photo_before')->latest()->first();
         return view('reservasi.index', compact('services', 'latest_reservation'));
     }
 
@@ -85,11 +70,8 @@ class ReservationController extends Controller
         $service = Service::findOrFail($request->service_id);
         $tanggal = $request->tanggal_reservasi ?? Carbon::today()->format('Y-m-d');
 
-        // Cek kuota yang tersisa langsung dari database (field kuota di tabel services)
         if ($service->kuota < $request->jumlah_sepatu) {
-            return redirect()->back()
-                ->with('error', 'Maaf, kuota tidak mencukupi. Sisa kuota saat ini: ' . $service->kuota)
-                ->withInput();
+            return redirect()->back()->with('error', 'Maaf, kuota tidak mencukupi. Sisa: ' . $service->kuota)->withInput();
         }
 
         $biayaAntarJemput = ($request->tipe_pengiriman == 'antar_jemput') ? 5000 : 0;
@@ -111,7 +93,6 @@ class ReservationController extends Controller
                 'status_pembayaran' => 'unpaid',
             ]);
 
-            // PENTING: Kurangi kuota di tabel services
             $service->decrement('kuota', $request->jumlah_sepatu);
 
             $params = [
@@ -129,7 +110,7 @@ class ReservationController extends Controller
             return view('pembayaran', compact('snapToken', 'reservasi'));
             
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memproses pembayaran: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Gagal: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -140,9 +121,7 @@ class ReservationController extends Controller
         $res = Reservation::findOrFail($id);
         $oldStatus = $res->status;
 
-        if ($request->has('status')) {
-            $res->status = $request->status;
-        }
+        if ($request->has('status')) $res->status = $request->status;
 
         if ($request->hasFile('photo_before')) {
             if ($res->photo_before) Storage::disk('public')->delete($res->photo_before);
@@ -156,33 +135,26 @@ class ReservationController extends Controller
 
         $res->save();
 
-        // Trigger Fonnte jika status berubah menjadi 'selesai'
         if ($oldStatus !== 'selesai' && $res->status === 'selesai') {
             $this->sendWhatsappFonnte($res);
         }
 
-        return redirect()->back()->with('success', 'Status & Foto berhasil diperbarui!');
+        return redirect()->back()->with('success', 'Status & Foto diperbarui!');
     }
 
     private function sendWhatsappFonnte($res)
     {
         $token = env('FONNTE_TOKEN');
-        
-        // Membersihkan nomor WA dari karakter non-digit (seperti spasi atau tanda +)
         $target = preg_replace('/[^0-9]/', '', $res->nomor_wa);
-
-        $message = "Halo *{$res->nama_pelanggan}*,\n\nSepatu Anda dengan nomor antrian *#{$res->id}* telah *SELESAI* ✨\n\nSilakan diambil di workshop Nature Clean.\n\nTerima kasih!";
+        $message = "Halo *{$res->nama_pelanggan}*,\n\nSepatu Anda *#{$res->id}* telah *SELESAI* ✨\n\nSilakan diambil. Terima kasih!";
 
         try {
-            Http::withHeaders([
-                'Authorization' => $token,
-            ])->post('https://api.fonnte.com/send', [
+            Http::withHeaders(['Authorization' => $token])->post('https://api.fonnte.com/send', [
                 'target' => $target,
                 'message' => $message,
             ]);
         } catch (\Exception $e) {
-            // Kita gunakan log jika pengiriman WA gagal agar program utama tidak crash
-            \Log::error('Gagal mengirim WA Fonnte: ' . $e->getMessage());
+            \Log::error('Fonnte Error: ' . $e->getMessage());
         }
     }
 
@@ -190,8 +162,7 @@ class ReservationController extends Controller
     {
         $request->validate(['rating' => 'required|integer|min:1|max:5', 'testimoni' => 'required|string|max:500']);
         $res = Reservation::findOrFail($id);
-        if ($res->status !== 'selesai') return redirect()->back()->with('error', 'Belum selesai.');
-        if ($res->rating) return redirect()->back()->with('error', 'Sudah memberi ulasan.');
+        if ($res->status !== 'selesai' || $res->rating) return redirect()->back()->with('error', 'Gagal kirim ulasan.');
         $res->update(['rating' => $request->rating, 'testimoni' => $request->testimoni]);
         return redirect()->back()->with('success', 'Terima kasih!');
     }
@@ -206,21 +177,16 @@ class ReservationController extends Controller
     public function destroy($id)
     {
         $res = Reservation::findOrFail($id);
-
-        // Tambahkan pengembalian kuota jika data dihapus (opsional tapi disarankan)
-        if ($res->service) {
-            $res->service->increment('kuota', $res->jumlah_sepatu);
-        }
-
+        if ($res->service) $res->service->increment('kuota', $res->jumlah_sepatu);
         if($res->photo_before) Storage::disk('public')->delete($res->photo_before);
         if($res->photo_after) Storage::disk('public')->delete($res->photo_after);
         $res->delete();
-        return redirect()->back()->with('success', 'Data dihapus dan kuota dikembalikan.');
+        return redirect()->back()->with('success', 'Data dihapus.');
     }
 
     // --- SERVICE & EXPENSE ---
     public function storeService(Request $request) { Service::create($request->all()); return redirect()->back()->with('success', 'Layanan ditambah!'); }
-    public function updateService(Request $request, $id) { $service = Service::findOrFail($id); $service->update($request->all()); return redirect()->back()->with('success', 'Layanan diupdate!'); }
+    public function updateService(Request $request, $id) { Service::findOrFail($id)->update($request->all()); return redirect()->back()->with('success', 'Layanan diupdate!'); }
     public function destroyService($id) { Service::destroy($id); return redirect()->back()->with('success', 'Layanan dihapus.'); }
 
     public function storeExpense(Request $request)
@@ -255,17 +221,28 @@ class ReservationController extends Controller
         return view('reservasi.owner', compact('totalPendapatan', 'totalPengeluaran', 'keuntunganBersih', 'totalSepatu', 'statusPending', 'statusProses', 'statusSelesai', 'latestTransactions', 'latestExpenses', 'chartData'));
     }
 
+    /**
+     * DOWNLOAD PDF - Sudah sinkron dengan pdf.blade.php
+     */
     public function downloadPDF()
     {
         $reservations = Reservation::with('service')->get();
+        $totalOmzet = $reservations->where('status', 'selesai')->sum('total_harga');
+        $totalPengeluaran = Expense::sum('jumlah');
+        $keuntunganBersih = $totalOmzet - $totalPengeluaran;
+
         $pdf = Pdf::loadView('reservasi.pdf', [
             'reservations' => $reservations,
-            'totalOmzet' => $reservations->where('status', 'selesai')->sum('total_harga'),
-            'totalPengeluaran' => Expense::sum('jumlah'),
-            'keuntunganBersih' => $reservations->where('status', 'selesai')->sum('total_harga') - Expense::sum('jumlah'),
+            'total' => $totalOmzet, // Variabel ini WAJIB ada sesuai file blade kamu
+            'totalPengeluaran' => $totalPengeluaran,
+            'keuntunganBersih' => $keuntunganBersih,
             'date' => Carbon::now()->format('d/m/Y')
+        ])->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true // Memungkinkan loading gambar/css via URL
         ]);
-        return $pdf->download('Laporan-Nature-Clean.pdf');
+
+        return $pdf->download('Laporan-Nature-Clean-'.date('Y-m-d').'.pdf');
     }
 
     public function searchStatus(Request $request)

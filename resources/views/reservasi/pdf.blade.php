@@ -1,15 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Laporan Pendapatan</title>
+    <meta charset="UTF-8">
+    <title>Laporan Pendapatan | Nature Clean</title>
     <style>
-        body { font-family: sans-serif; font-size: 12px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; }
-        table, th, td { border: 1px solid #333; }
-        th, td { padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .footer { margin-top: 30px; text-align: right; }
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            font-size: 12px; 
+            color: #333;
+            line-height: 1.5;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            border-bottom: 2px solid #444;
+            padding-bottom: 10px;
+        }
+        .header h2 { margin: 0; color: #6F4E37; }
+        .header p { margin: 5px 0; }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 20px;
+        }
+        table, th, td { 
+            border: 1px solid #ccc; 
+        }
+        th { 
+            background-color: #f8f5f2; 
+            padding: 10px; 
+            text-align: left;
+            font-weight: bold;
+        }
+        td { 
+            padding: 8px; 
+            vertical-align: middle;
+        }
+        .text-right { text-align: right; }
+        .fw-bold { font-weight: bold; }
+        
+        .footer { 
+            margin-top: 50px; 
+            text-align: right; 
+            font-style: italic;
+            font-size: 10px;
+        }
+        .summary-box {
+            margin-top: 20px;
+            width: 40%;
+            float: right;
+        }
     </style>
 </head>
 <body>
@@ -22,7 +63,7 @@
     <table>
         <thead>
             <tr>
-                <th>No</th>
+                <th style="width: 5%;">No</th>
                 <th>Nama Pelanggan</th>
                 <th>Layanan</th>
                 <th>Tanggal</th>
@@ -32,24 +73,24 @@
         <tbody>
             @foreach($reservations as $key => $res)
             <tr>
-                <td>{{ $key + 1 }}</td>
+                <td style="text-align: center;">{{ $key + 1 }}</td>
                 <td>{{ $res->nama_pelanggan }}</td>
                 <td>{{ $res->jenis_layanan }}</td>
-                <td>{{ $res->tanggal_reservasi }}</td>
-                <td>Rp {{ number_format($res->total_harga, 0, ',', '.') }}</td>
+                <td>{{ \Carbon\Carbon::parse($res->tanggal_reservasi)->format('d M Y') }}</td>
+                <td class="text-right">Rp {{ number_format($res->total_harga, 0, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
         <tfoot>
-            <tr>
-                <th colspan="4" style="text-align: right;">GRAND TOTAL:</th>
-                <th>Rp {{ number_format($total, 0, ',', '.') }}</th>
+            <tr style="background-color: #eee;">
+                <th colspan="4" class="text-right">GRAND TOTAL OMZET:</th>
+                <th class="text-right">Rp {{ number_format($total, 0, ',', '.') }}</th>
             </tr>
         </tfoot>
     </table>
 
     <div class="footer">
-        <p>Dicetak Secara Otomatis oleh Sistem Reservasi</p>
+        <p>Dicetak secara otomatis oleh Sistem Manajemen Nature Clean Shoes</p>
     </div>
 </body>
 </html>
