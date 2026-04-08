@@ -37,7 +37,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // --- AREA TERPROTEKSI (Harus Login) ---
 Route::middleware('auth')->group(function () {
 
-    // --- HALAMAN ADMIN (Akses: Admin & Owner) ---
+    // --- HALAMAN ADMIN (Akses: Admin) ---
+    // Pastikan middleware 'isAdmin' kamu sudah mengecek role == 'admin'
     Route::middleware('isAdmin')->prefix('admin')->group(function () {
         
         // Dashboard Utama Admin
@@ -59,7 +60,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/portfolio/{id}', [ReservationController::class, 'destroyPortfolio'])->name('admin.portfolio.destroy');
     });
 
-    // --- HALAMAN OWNER (Akses Khusus: Owner Saja) ---
+    // --- HALAMAN OWNER (Akses: Owner) ---
+    // Pastikan middleware 'isOwner' kamu sudah mengecek role == 'owner'
     Route::middleware('isOwner')->prefix('owner')->group(function () {
         
         // Dashboard Khusus Owner (Laporan Keuangan & Grafik)
@@ -68,7 +70,7 @@ Route::middleware('auth')->group(function () {
         /** * MANAJEMEN PENGELUARAN */
         Route::post('/expense', [ReservationController::class, 'storeExpense'])->name('owner.storeExpense');
         
-        // Fitur ekspor laporan ke PDF (Mencakup Omzet & Pengeluaran)
+        // Fitur ekspor laporan ke PDF
         Route::get('/download-pdf', [ReservationController::class, 'downloadPDF'])->name('owner.pdf');
     });
 
@@ -76,19 +78,25 @@ Route::middleware('auth')->group(function () {
 
 /**
  * FIX GAMBAR 404 DI RAILWAY
- * Jalankan route ini satu kali setelah deploy: domain.com/fix-storage
+ * Jalankan route ini satu kali setelah deploy: namadomain.railway.app/fix-storage
  */
 Route::get('/fix-storage', function () {
     try {
-        // Menghapus link lama jika ada
-        if (file_exists(public_path('storage'))) {
-            rmdir(public_path('storage'));
+        // Perbaikan: Gunakan perintah shell untuk hapus folder jika symlink rusak (Khusus Linux/Railway)
+        $publicStoragePath = public_path('storage');
+        
+        if (is_link($publicStoragePath)) {
+            unlink($publicStoragePath);
+        } elseif (file_exists($publicStoragePath)) {
+            // Jika folder asli bukan link, kita rename/hapus (hati-hati di lokal)
+            // Di Railway biasanya ini perlu dihapus agar link baru bisa dibuat
+            exec('rm -rf ' . escapeshellarg($publicStoragePath));
         }
         
         // Membuat link baru
         Artisan::call('storage:link');
         
-        return "Berhasil! Storage link telah diperbarui. Silakan cek gambar kamu kembali.";
+        return "Berhasil! Storage link telah diperbarui di Railway. Silakan cek gambar kembali.";
     } catch (\Exception $e) {
         return "Gagal: " . $e->getMessage();
     }

@@ -163,6 +163,24 @@
             background: #fee2e2;
             color: #b91c1c;
         }
+
+        /* Toggle Password Style */
+        .password-toggle {
+            cursor: pointer;
+            padding-right: 15px;
+            border-left: none;
+            background: #fff;
+            border: 2px solid #eee;
+            border-left: none;
+            border-radius: 0 15px 15px 0;
+            display: flex;
+            align-items: center;
+            color: var(--accent);
+        }
+        .form-control.with-toggle {
+            border-right: none;
+            border-radius: 0;
+        }
     </style>
 </head>
 <body>
@@ -187,9 +205,15 @@
                 </div>
             @endif
 
+            @if(session('success'))
+                <div class="alert alert-success p-3 mb-4 shadow-sm" style="border-radius:15px; font-size: 0.8rem; font-weight: 700;">
+                    <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+                </div>
+            @endif
+
             <form action="{{ route('login') }}" method="POST" autocomplete="off">
                 @csrf
-                <input type="hidden" name="role" value="{{ request()->query('role', 'admin') }}">
+                <input type="hidden" name="intended_role" value="{{ request()->query('role', 'admin') }}">
 
                 <div class="mb-3">
                     <label class="form-label">EMAIL ADDRESS</label>
@@ -197,6 +221,7 @@
                         <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                         <input type="email" name="email" class="form-control" 
                                placeholder="nama@email.com" 
+                               value="{{ old('email') }}"
                                required autofocus>
                     </div>
                 </div>
@@ -205,8 +230,20 @@
                     <label class="form-label">PASSWORD</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input type="password" name="password" class="form-control" 
+                        <input type="password" name="password" id="password" class="form-control with-toggle" 
                                placeholder="********" required>
+                        <span class="password-toggle" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="toggleIcon"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                        <label class="form-check-label" for="remember" style="font-size: 0.75rem; font-weight: 700; color: var(--accent);">
+                            Ingat Saya
+                        </label>
                     </div>
                 </div>
 
@@ -223,6 +260,23 @@
         </div>
     </div>
 </div>
+
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('toggleIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+</script>
 
 </body>
 </html>

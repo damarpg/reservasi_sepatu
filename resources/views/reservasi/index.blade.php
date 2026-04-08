@@ -77,7 +77,6 @@
             position: absolute; bottom: -12px; left: 0; border-radius: 10px;
         }
 
-        /* Portfolio Styling */
         .portfolio-item { position: relative; overflow: hidden; border-radius: 25px; border: 5px solid white; box-shadow: var(--soft-shadow); }
         .portfolio-img { transition: 0.5s; cursor: pointer; height: 320px; object-fit: cover; width: 100%; }
         .portfolio-overlay { 
@@ -134,18 +133,45 @@
             <button class="btn btn-outline-brown px-4 d-none d-md-block" data-bs-toggle="modal" data-bs-target="#modalLacak">
                 <i class="fas fa-search me-2"></i>Lacak Pesanan
             </button>
+            
             <div class="dropdown">
                 <button class="btn btn-brown px-4" type="button" data-bs-toggle="dropdown">
                     Access <i class="fas fa-chevron-down ms-1 small"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2 rounded-4">
-                    <li><a class="dropdown-item py-2 rounded-3" href="{{ route('login') }}?role=admin"><i class="fas fa-user-shield me-2"></i>Admin Panel</a></li>
-                    <li><a class="dropdown-item py-2 rounded-3 text-brown" href="{{ route('login') }}?role=owner"><i class="fas fa-store me-2"></i>Owner Dashboard</a></li>
+                    {{-- Pengecekan apakah user sudah login atau belum --}}
+                    @auth
+                        @if(Auth::user()->role == 'admin')
+                            <li><a class="dropdown-item py-2 rounded-3 fw-bold text-success" href="{{ route('admin.index') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard Admin</a></li>
+                        @else
+                            <li><a class="dropdown-item py-2 rounded-3 fw-bold text-success" href="{{ route('owner.index') }}"><i class="fas fa-chart-line me-2"></i>Dashboard Owner</a></li>
+                        @endif
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="dropdown-item py-2 rounded-3 text-danger fw-bold"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+                            </form>
+                        </li>
+                    @else
+                        <li><a class="dropdown-item py-2 rounded-3" href="{{ route('login') }}?role=admin"><i class="fas fa-user-shield me-2"></i>Admin Panel</a></li>
+                        <li><a class="dropdown-item py-2 rounded-3 text-brown" href="{{ route('login') }}?role=owner"><i class="fas fa-store me-2"></i>Owner Dashboard</a></li>
+                    @endauth
                 </ul>
             </div>
         </div>
     </div>
 </nav>
+
+{{-- Notifikasi Error/Success --}}
+@if(session('error'))
+<div class="container mt-3">
+    <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+@endif
 
 <header class="hero-section">
     <div class="container">
@@ -172,7 +198,6 @@
 
 <main class="container py-5">
     
-    {{-- Section Before/After Dynamic --}}
     @if(isset($latest_reservation) && $latest_reservation->photo_before && $latest_reservation->photo_after)
     <section class="py-5" data-aos="fade-up">
         <div class="text-center mb-5">
@@ -216,7 +241,6 @@
         <div class="row g-4">
             @forelse($portfolios ?? [] as $p)
                 @php 
-                    // Logika proteksi path gambar
                     $imgPath = str_contains($p->gambar, 'portfolio/') ? $p->gambar : 'portfolio/' . $p->gambar;
                 @endphp
                 <div class="col-md-4" data-aos="zoom-in">
@@ -357,13 +381,12 @@
     <section class="py-5" data-aos="zoom-in">
         <div class="text-center mb-5"><h2 class="section-title">Kunjungi Workshop Kami</h2></div>
         <div class="map-container">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.603332822554!2d112.7153!3d-7.2858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwMTcnMDguOSJTIDExMsKwNDInNTUuMSJF!5e0!3m2!1sid!2sid!4v1650000000000!5m2!1sid!2sid" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.5683244848675!2d112.71630137456722!3d-7.289793171646279!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fb9725f77861%3A0x6e788c634c7b887a!2sJl.%20Dukuh%20Kupang%20XVII%20No.35%2C%20Dukuh%20Kupang%2C%20Kec.%20Dukuhpakis%2C%20Surabaya%2C%20Jawa%20Timur%2060225!5e0!3m2!1sid!2sid!4v1705542831234!5m2!1sid!2sid" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
         </div>
     </section>
 
 </main>
 
-{{-- Modal Lacak Pesanan --}}
 <div class="modal fade" id="modalLacak" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-5 overflow-hidden shadow-lg">
@@ -417,7 +440,6 @@
         document.getElementById('alamat-section').classList.toggle('d-none', tipe === 'toko');
     }
 
-    // Kalkulator Biaya
     const calcService = document.getElementById('calc-service');
     const calcQty = document.getElementById('calc-qty');
     const calcTotalDisplay = document.getElementById('calc-total');
@@ -432,7 +454,6 @@
     if(calcQty) calcQty.addEventListener('input', calculate);
     window.addEventListener('load', calculate);
 
-    // Before/After Slider Logic
     const slider = document.getElementById('ba-slider');
     const beforeContainer = document.getElementById('before-container');
     const beforeImg = document.getElementById('before-img');
