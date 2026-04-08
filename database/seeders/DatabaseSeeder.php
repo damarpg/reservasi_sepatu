@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Admin Nature Clean',
             'email' => 'admin@gmail.com',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('admin123'), // Saya bedakan pass admin biar aman
             'role' => 'admin',
         ]);
 
@@ -41,7 +41,7 @@ class DatabaseSeeder extends Seeder
             'value' => 20,
         ]);
 
-        // 4. Panggil Seeder lainnya
+        // 4. Panggil Seeder lainnya (Pastikan file ServiceSeeder.php sudah ada)
         $this->call([
             ServiceSeeder::class,
         ]);
