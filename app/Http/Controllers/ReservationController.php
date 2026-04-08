@@ -146,6 +146,9 @@ class ReservationController extends Controller
         return redirect()->back()->with('success', 'Status & Foto diperbarui!');
     }
 
+    /**
+     * FIX: Fungsi simpan portfolio agar kolom 'gambar' terisi
+     */
     public function storePortfolio(Request $request)
     {
         $request->validate([
@@ -154,11 +157,15 @@ class ReservationController extends Controller
         ]);
 
         if ($request->hasFile('gambar')) {
+            // Simpan file fisik
             $path = $request->file('gambar')->store('portfolio', 'public');
+            
+            // Simpan ke database dengan kolom 'gambar'
             Portfolio::create([
                 'judul' => $request->judul,
                 'gambar' => $path,
             ]);
+
             return redirect()->back()->with('success', 'Foto portfolio keren berhasil ditambah!');
         }
 
@@ -268,15 +275,9 @@ class ReservationController extends Controller
         return $pdf->download('Laporan-Nature-Clean-'.date('Y-m-d').'.pdf');
     }
 
-    /**
-     * PERBAIKAN FINAL SEARCH STATUS
-     */
     public function searchStatus(Request $request)
     {
-        // Gunakan 'search' karena di file Blade kamu name input-nya adalah "search"
         $keyword = $request->input('search');
-
-        // Cari pesanan berdasarkan nomor WA, ambil yang paling baru
         $reservation = null;
         if ($keyword) {
             $reservation = Reservation::where('nomor_wa', $keyword)
@@ -285,7 +286,6 @@ class ReservationController extends Controller
                             ->first();
         }
         
-        // Kirim $reservation ke view (satuan, sesuai kebutuhan if($reservation) di Blade kamu)
         return view('reservasi.check-status', compact('reservation'));
     }
 }
