@@ -52,7 +52,7 @@
 
         .hero-section {
             background: linear-gradient(135deg, #F5EBE0 0%, #E3D5CA 100%);
-            padding: 100px 0 80px 0;
+            padding: 120px 0 80px 0;
             border-radius: 0 0 60px 60px;
             position: relative;
         }
@@ -67,6 +67,7 @@
             border-radius: 25px;
             border: 1px solid rgba(255, 255, 255, 0.5);
             transition: 0.4s; padding: 30px;
+            height: 100%;
         }
         .glass-card:hover { transform: translateY(-10px); background: white; box-shadow: var(--soft-shadow); }
 
@@ -76,38 +77,47 @@
             position: absolute; bottom: -12px; left: 0; border-radius: 10px;
         }
 
-        .portfolio-img { border-radius: 25px; transition: 0.5s; cursor: pointer; height: 300px; object-fit: cover; width: 100%; border: 5px solid white; }
-        .portfolio-img:hover { transform: scale(1.03); box-shadow: var(--soft-shadow); }
+        /* Portfolio Styling */
+        .portfolio-item { position: relative; overflow: hidden; border-radius: 25px; border: 5px solid white; box-shadow: var(--soft-shadow); }
+        .portfolio-img { transition: 0.5s; cursor: pointer; height: 320px; object-fit: cover; width: 100%; }
+        .portfolio-overlay { 
+            position: absolute; bottom: 0; left: 0; right: 0; 
+            background: linear-gradient(transparent, rgba(62, 39, 35, 0.8)); 
+            padding: 20px; opacity: 0; transition: 0.4s; 
+        }
+        .portfolio-item:hover .portfolio-overlay { opacity: 1; }
+        .portfolio-item:hover .portfolio-img { transform: scale(1.1); }
 
         .ba-wrapper {
-            position: relative; width: 100%; max-width: 700px; height: 400px;
-            margin: 0 auto; border-radius: 25px; overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1); border: 8px solid #fff;
+            position: relative; width: 100%; max-width: 700px; height: 450px;
+            margin: 0 auto; border-radius: 30px; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); border: 10px solid #fff;
         }
         .ba-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .ba-before { z-index: 2; border-right: 3px solid #fff; overflow: hidden; }
+        .ba-before { z-index: 2; border-right: 4px solid #fff; overflow: hidden; }
         .ba-input {
             position: absolute; -webkit-appearance: none; appearance: none; width: 100%; height: 100%;
             background: transparent; outline: none; z-index: 10; cursor: ew-resize; top: 0;
         }
 
         .form-control, .form-select {
-            border-radius: 15px; padding: 12px; border: 1px solid rgba(93, 64, 55, 0.1);
+            border-radius: 15px; padding: 14px; border: 1px solid rgba(93, 64, 55, 0.1);
+            background-color: #fcfaf8;
         }
         .accordion-item { border: none; margin-bottom: 15px; border-radius: 20px !important; overflow: hidden; box-shadow: var(--soft-shadow); }
-        .accordion-button { font-weight: 800; background-color: white; }
+        .accordion-button { font-weight: 800; background-color: white; padding: 20px; }
         .accordion-button:not(.collapsed) { background-color: var(--accent-tan); color: var(--primary-brown); }
 
-        .map-container { border-radius: 40px; overflow: hidden; border: 10px solid #fff; box-shadow: var(--soft-shadow); }
+        .map-container { border-radius: 40px; overflow: hidden; border: 12px solid #fff; box-shadow: var(--soft-shadow); }
 
         .floating-wa {
             position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px;
             background: var(--primary-brown); color: var(--bg-sweet-brown); border: 4px solid white;
             border-radius: 50%; display: flex; align-items: center; justify-content: center; 
             font-size: 30px; z-index: 999; box-shadow: var(--soft-shadow); 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-decoration: none;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-decoration: none;
         }
-        .floating-wa:hover { transform: scale(1.1) rotate(10deg); background: var(--secondary-brown); color: white; }
+        .floating-wa:hover { transform: scale(1.1) rotate(10deg); background: #25D366; color: white; }
 
         .hover-scale { transition: 0.3s; }
         .hover-scale:hover { transform: scale(1.2); color: var(--primary-brown) !important; }
@@ -118,17 +128,19 @@
 <nav class="navbar sticky-top">
     <div class="container d-flex justify-content-between align-items-center">
         <a class="navbar-brand fs-3 text-brown" href="#">
-            <i class="fas fa-leaf me-2"></i>NATURE<span style="color: var(--secondary-brown)">CLEAN.</span>
+            <i class="fas fa-leaf me-2" style="color: var(--primary-brown)"></i>NATURE<span style="color: var(--secondary-brown)">CLEAN.</span>
         </a>
         <div class="d-flex align-items-center gap-3">
             <button class="btn btn-outline-brown px-4 d-none d-md-block" data-bs-toggle="modal" data-bs-target="#modalLacak">
                 <i class="fas fa-search me-2"></i>Lacak Pesanan
             </button>
             <div class="dropdown">
-                <button class="btn btn-brown px-4" type="button" data-bs-toggle="dropdown">Access <i class="fas fa-chevron-down ms-1 small"></i></button>
+                <button class="btn btn-brown px-4" type="button" data-bs-toggle="dropdown">
+                    Access <i class="fas fa-chevron-down ms-1 small"></i>
+                </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2 rounded-4">
-                    <li><a class="dropdown-item py-2" href="{{ route('login') }}?role=admin">Admin Panel</a></li>
-                    <li><a class="dropdown-item py-2 text-brown" href="{{ route('login') }}?role=owner">Owner Dashboard</a></li>
+                    <li><a class="dropdown-item py-2 rounded-3" href="{{ route('login') }}?role=admin"><i class="fas fa-user-shield me-2"></i>Admin Panel</a></li>
+                    <li><a class="dropdown-item py-2 rounded-3 text-brown" href="{{ route('login') }}?role=owner"><i class="fas fa-store me-2"></i>Owner Dashboard</a></li>
                 </ul>
             </div>
         </div>
@@ -140,10 +152,10 @@
         <div class="row align-items-center">
             <div class="col-lg-6 text-center text-lg-start" data-aos="fade-right">
                 <div class="d-inline-block bg-white shadow-sm border rounded-pill px-3 py-1 mb-3">
-                    <small class="text-brown"><i class="fas fa-star me-2"></i>#1 Premium Shoe Care Surabaya</small>
+                    <small class="text-brown"><i class="fas fa-star me-2 text-warning"></i>#1 Premium Shoe Care Surabaya</small>
                 </div>
                 <h1 class="display-3 mb-3">Kembalikan <span style="color: var(--primary-brown)">Kilau Mewah</span> Sepatu Anda.</h1>
-                <p class="lead mb-4 opacity-75">Perawatan eksklusif menggunakan formula organik yang aman bagi material sepatu sensitif dan ramah lingkungan.</p>
+                <p class="lead mb-4 opacity-75">Perawatan eksklusif menggunakan formula organik yang aman bagi material sensitif dan ramah lingkungan.</p>
                 <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
                     <a href="#booking" class="btn btn-brown btn-lg px-4 shadow-lg">Booking Sekarang</a>
                     <a href="#portfolio" class="btn btn-outline-brown btn-lg px-4">Lihat Hasil <i class="fas fa-arrow-right ms-2"></i></a>
@@ -160,12 +172,13 @@
 
 <main class="container py-5">
     
+    {{-- Section Before/After Dynamic --}}
     @if(isset($latest_reservation) && $latest_reservation->photo_before && $latest_reservation->photo_after)
     <section class="py-5" data-aos="fade-up">
         <div class="text-center mb-5">
             <h2 class="section-title">Bukti Nyata Perawatan</h2>
         </div>
-        <div class="ba-wrapper">
+        <div class="ba-wrapper shadow-lg">
             <img src="{{ asset('storage/' . $latest_reservation->photo_after) }}" class="ba-img">
             <div class="ba-img ba-before" id="before-container">
                 <img src="{{ asset('storage/' . $latest_reservation->photo_before) }}" id="before-img">
@@ -198,18 +211,31 @@
     <section id="portfolio" class="py-5">
         <div class="text-center mb-5" data-aos="fade-up">
             <h2 class="section-title">Portfolio Kami</h2>
-            <p>Koleksi transformasi sepatu pelanggan kami.</p>
+            <p>Koleksi transformasi terbaik dari tangan ahli kami.</p>
         </div>
         <div class="row g-4">
             @forelse($portfolios ?? [] as $p)
+                @php 
+                    // Logika proteksi path gambar
+                    $imgPath = str_contains($p->gambar, 'portfolio/') ? $p->gambar : 'portfolio/' . $p->gambar;
+                @endphp
                 <div class="col-md-4" data-aos="zoom-in">
-                    <img src="{{ asset('storage/' . $p->gambar) }}" class="portfolio-img shadow-sm" alt="Portfolio">
+                    <div class="portfolio-item">
+                        <img src="{{ asset('storage/' . $imgPath) }}" 
+                             class="portfolio-img" 
+                             alt="Portfolio"
+                             onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Nature+Clean';">
+                        <div class="portfolio-overlay">
+                            <h5 class="text-white mb-0">Transformasi Sepatu</h5>
+                            <small class="text-white-50">Deep Cleaning Premium</small>
+                        </div>
+                    </div>
                 </div>
             @empty
                 <div class="col-12 text-center py-5">
-                    <div class="glass-card d-inline-block p-5 border-dashed">
+                    <div class="glass-card d-inline-block p-5" style="border: 2px dashed var(--accent-tan);">
                         <i class="fas fa-images fa-4x opacity-25 mb-3"></i>
-                        <h5>Galeri Segera Hadir</h5>
+                        <h5>Galeri Segera Diperbarui</h5>
                     </div>
                 </div>
             @endforelse
@@ -224,14 +250,16 @@
                     <div class="mb-3">
                         <label class="small mb-2">Pilih Layanan</label>
                         <select id="calc-service" class="form-select border-0 shadow-sm">
-                            @foreach($services as $s) @if($s->kuota > 0) <option value="{{ $s->harga }}">{{ $s->nama_layanan }}</option> @endif @endforeach
+                            @foreach($services as $s) 
+                                @if($s->kuota > 0) <option value="{{ $s->harga }}">{{ $s->nama_layanan }}</option> @endif 
+                            @endforeach
                         </select>
                     </div>
                     <div class="mb-4">
                         <label class="small mb-2">Jumlah Sepatu</label>
                         <input type="number" id="calc-qty" class="form-control border-0 shadow-sm" value="1" min="1">
                     </div>
-                    <div class="bg-white p-4 rounded-4 text-center">
+                    <div class="bg-white p-4 rounded-4 text-center shadow-sm">
                         <p class="small text-muted mb-1">Total Estimasi</p>
                         <h2 class="text-brown mb-0" id="calc-total">Rp 0</h2>
                     </div>
@@ -244,19 +272,22 @@
                         @csrf
                         <div class="row g-3">
                             <div class="col-12"><input type="text" name="nama_pelanggan" class="form-control" placeholder="Nama Lengkap" required></div>
-                            <div class="col-12"><input type="text" name="nomor_wa" class="form-control" placeholder="Nomor WhatsApp" required></div>
+                            <div class="col-12"><input type="text" name="nomor_wa" class="form-control" placeholder="Nomor WhatsApp (Contoh: 0812...)" required></div>
                             <div class="col-md-8">
                                 <select name="service_id" class="form-select">
-                                    @foreach($services as $s) <option value="{{ $s->id }}" {{ $s->kuota <= 0 ? 'disabled' : '' }}>{{ $s->nama_layanan }}</option> @endforeach
+                                    @foreach($services as $s) 
+                                        <option value="{{ $s->id }}" {{ $s->kuota <= 0 ? 'disabled' : '' }}>{{ $s->nama_layanan }}</option> 
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-4"><input type="number" name="jumlah_sepatu" class="form-control" value="1" min="1"></div>
                             <div class="col-12">
+                                <label class="small mb-2 d-block">Metode Pengiriman</label>
                                 <div class="d-flex gap-2">
                                     <input type="radio" class="btn-check" name="tipe_pengiriman" id="opt1" value="antar_sendiri" checked onclick="toggleMetode('toko')">
-                                    <label class="btn btn-outline-dark w-50 py-3 rounded-4" for="opt1">Drop Toko</label>
+                                    <label class="btn btn-outline-dark w-50 py-3 rounded-4" for="opt1"><i class="fas fa-store me-2"></i>Drop Toko</label>
                                     <input type="radio" class="btn-check" name="tipe_pengiriman" id="opt2" value="antar_jemput" onclick="toggleMetode('jemput')">
-                                    <label class="btn btn-outline-dark w-50 py-3 rounded-4" for="opt2">Antar Jemput</label>
+                                    <label class="btn btn-outline-dark w-50 py-3 rounded-4" for="opt2"><i class="fas fa-truck me-2"></i>Antar Jemput</label>
                                 </div>
                             </div>
                             <div id="alamat-section" class="col-12 d-none">
@@ -274,24 +305,24 @@
         <div class="text-center mb-5"><h2 class="section-title">Apa Kata Mereka?</h2></div>
         <div class="row g-4">
             <div class="col-md-4" data-aos="fade-up">
-                <div class="bg-white p-4 rounded-4 shadow-sm">
+                <div class="bg-white p-4 rounded-4 shadow-sm border-bottom border-4 border-brown">
                     <div class="text-warning mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p class="fst-italic">"Sepatu putih saya yang sudah kuning balik jadi kayak baru lagi!"</p>
-                    <h6 class="mb-0">- Andi S.</h6>
+                    <p class="fst-italic opacity-75">"Sepatu putih saya yang sudah kuning balik jadi kayak baru lagi! Benar-benar magic."</p>
+                    <h6 class="mb-0 text-brown">- Andi S.</h6>
                 </div>
             </div>
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="bg-white p-4 rounded-4 shadow-sm">
+                <div class="bg-white p-4 rounded-4 shadow-sm border-bottom border-4 border-brown">
                     <div class="text-warning mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p class="fst-italic">"Suka banget sama konsep organiknya, aman buat suede."</p>
-                    <h6 class="mb-0">- Rina M.</h6>
+                    <p class="fst-italic opacity-75">"Suka banget sama konsep organiknya, aman buat suede mahal saya. Workshopnya juga bersih."</p>
+                    <h6 class="mb-0 text-brown">- Rina M.</h6>
                 </div>
             </div>
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="bg-white p-4 rounded-4 shadow-sm">
+                <div class="bg-white p-4 rounded-4 shadow-sm border-bottom border-4 border-brown">
                     <div class="text-warning mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p class="fst-italic">"Layanan antar jemputnya on-time banget. Recommended!"</p>
-                    <h6 class="mb-0">- Budi K.</h6>
+                    <p class="fst-italic opacity-75">"Layanan antar jemputnya on-time banget. Sangat memudahkan buat yang sibuk kerja."</p>
+                    <h6 class="mb-0 text-brown">- Budi K.</h6>
                 </div>
             </div>
         </div>
@@ -302,22 +333,22 @@
             <h3 class="mb-4">Tips Merawat Sepatu</h3>
             <div class="glass-card">
                 <ul class="list-unstyled mb-0">
-                    <li class="mb-3 d-flex"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> Jangan jemur langsung di bawah matahari.</li>
-                    <li class="mb-3 d-flex"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> Gunakan silica gel di kotak sepatu.</li>
-                    <li class="d-flex"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> Deep cleaning minimal 1 bulan sekali.</li>
+                    <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> <span>Jangan jemur langsung di bawah matahari agar warna tidak pudar.</span></li>
+                    <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> <span>Gunakan silica gel di dalam kotak untuk mencegah jamur.</span></li>
+                    <li class="d-flex align-items-start"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> <span>Lakukan deep cleaning minimal 1 bulan sekali untuk menjaga material.</span></li>
                 </ul>
             </div>
         </div>
         <div class="col-lg-6" data-aos="fade-left">
             <h3 class="mb-4">FAQ</h3>
             <div class="accordion" id="faqAccordion">
-                <div class="accordion-item">
+                <div class="accordion-item shadow-sm">
                     <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f1">Berapa lama pengerjaan?</button></h2>
-                    <div id="f1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Rata-rata 2-4 hari tergantung jenis layanan.</div></div>
+                    <div id="f1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Rata-rata 2-4 hari kerja tergantung antrean dan jenis layanan yang dipilih.</div></div>
                 </div>
-                <div class="accordion-item">
+                <div class="accordion-item shadow-sm">
                     <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">Apakah ada garansi?</button></h2>
-                    <div id="f2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Ya, garansi cuci ulang 1x24 jam setelah sepatu diterima.</div></div>
+                    <div id="f2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Ya, kami memberikan garansi cuci ulang gratis jika hasil tidak bersih maksimal (klaim 1x24 jam).</div></div>
                 </div>
             </div>
         </div>
@@ -326,12 +357,13 @@
     <section class="py-5" data-aos="zoom-in">
         <div class="text-center mb-5"><h2 class="section-title">Kunjungi Workshop Kami</h2></div>
         <div class="map-container">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.5957384180864!2d112.71618687355018!3d-7.286701171614748!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7f9570951662d%3A0x6a053531b40285a8!2sJl.%20Dukuh%20Kupang%20XVII%20No.35%2C%20Dukuh%20Kupang%2C%20Kec.%20Dukuhpakis%2C%20Surabaya%2C%20Jawa%20Timur%2060225!5e0!3m2!1sid!2sid!4v1741490000000!5m2!1sid!2sid" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.603332822554!2d112.7153!3d-7.2858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwMTcnMDguOSJTIDExMsKwNDInNTUuMSJF!5e0!3m2!1sid!2sid!4v1650000000000!5m2!1sid!2sid" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
         </div>
     </section>
 
 </main>
 
+{{-- Modal Lacak Pesanan --}}
 <div class="modal fade" id="modalLacak" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-5 overflow-hidden shadow-lg">
@@ -340,7 +372,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 bg-white">
-                <p class="small opacity-75 mb-4">Masukkan Nomor WhatsApp yang Anda gunakan saat reservasi untuk melihat progres sepatu.</p>
+                <p class="small opacity-75 mb-4">Masukkan Nomor WhatsApp yang terdaftar untuk melihat progres pencucian sepatu Anda.</p>
                 <form action="{{ route('reservasi.status') }}" method="GET">
                     <div class="input-group mb-3 bg-light rounded-4 p-1">
                         <span class="input-group-text border-0 bg-transparent text-brown"><i class="fab fa-whatsapp"></i></span>
@@ -352,24 +384,25 @@
                 </form>
             </div>
             <div class="modal-footer border-0 bg-light justify-content-center py-3">
-                <span class="small">Butuh bantuan? <a href="https://wa.me/6281236016773" class="text-brown fw-bold text-decoration-none">Chat Admin</a></span>
+                <span class="small">Butuh bantuan cepat? <a href="https://wa.me/6281236016773" class="text-brown fw-bold text-decoration-none">Hubungi Admin</a></span>
             </div>
         </div>
     </div>
 </div>
 
-<footer class="bg-white border-top py-5 text-center">
+<footer class="bg-white border-top py-5 text-center mt-5">
     <div class="container">
         <h4 class="text-brown mb-3">NATURECLEAN.</h4>
-        <p class="small opacity-75">Workshop: Dukuh Kupang 17 Nomor 35, Surabaya | WhatsApp: 0812-3601-6773</p>
+        <p class="small opacity-75 mb-4">Workshop: Dukuh Kupang 17 Nomor 35, Surabaya<br>
+        WhatsApp: 0812-3601-6773 | Email: hello@natureclean.id</p>
         
         <div class="d-flex justify-content-center gap-4 mb-4">
-            <a href="https://www.instagram.com/naturecleanshoes" target="_blank" class="text-brown fs-4 hover-scale"><i class="fab fa-instagram"></i></a>
-            <a href="https://www.tiktok.com/@naturecleanshoes" target="_blank" class="text-brown fs-4 hover-scale"><i class="fab fa-tiktok"></i></a>
-            <a href="https://wa.me/6281236016773" target="_blank" class="text-brown fs-4 hover-scale"><i class="fab fa-whatsapp"></i></a>
+            <a href="#" class="text-brown fs-4 hover-scale"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="text-brown fs-4 hover-scale"><i class="fab fa-tiktok"></i></a>
+            <a href="https://wa.me/6281236016773" class="text-brown fs-4 hover-scale"><i class="fab fa-whatsapp"></i></a>
         </div>
         
-        <p class="small mb-0">© 2026 Nature Clean Premium. All rights reserved.</p>
+        <p class="small mb-0 text-muted">© 2026 Nature Clean Premium Shoe Care. Dibuat dengan ❤️ di Surabaya.</p>
     </div>
 </footer>
 
@@ -384,6 +417,7 @@
         document.getElementById('alamat-section').classList.toggle('d-none', tipe === 'toko');
     }
 
+    // Kalkulator Biaya
     const calcService = document.getElementById('calc-service');
     const calcQty = document.getElementById('calc-qty');
     const calcTotalDisplay = document.getElementById('calc-total');
@@ -398,12 +432,17 @@
     if(calcQty) calcQty.addEventListener('input', calculate);
     window.addEventListener('load', calculate);
 
+    // Before/After Slider Logic
     const slider = document.getElementById('ba-slider');
     const beforeContainer = document.getElementById('before-container');
     const beforeImg = document.getElementById('before-img');
     const wrapper = document.querySelector('.ba-wrapper');
 
-    function syncWidth() { if (wrapper && beforeImg) beforeImg.style.width = wrapper.offsetWidth + 'px'; }
+    function syncWidth() { 
+        if (wrapper && beforeImg) {
+            beforeImg.style.width = wrapper.offsetWidth + 'px'; 
+        }
+    }
 
     if(slider) {
         window.addEventListener('load', syncWidth);
