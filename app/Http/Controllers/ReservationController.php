@@ -6,27 +6,24 @@ use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Models\Service;
 use App\Models\Expense;
+use App\Models\Portfolio; 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http; // Untuk Fonnte
-use Midtrans\Config; // Untuk Midtrans
+use Illuminate\Support\Facades\Http; 
+use Midtrans\Config; 
 use Midtrans\Snap;
 
 class ReservationController extends Controller
 {
     public function __construct()
     {
-        // Konfigurasi Midtrans dari .env
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized = true;
         Config::$is3ds = true;
     }
 
-    /**
-     * INTEGRASI MIDTRANS CALLBACK
-     */
     public function callback(Request $request)
     {
         $serverKey = env('MIDTRANS_SERVER_KEY');
@@ -47,13 +44,13 @@ class ReservationController extends Controller
         return response()->json(['status' => 'Signature Invalid'], 403);
     }
 
-    // --- HALAMAN PELANGGAN ---
-
     public function index()
     {
         $services = Service::all();
+        $portfolios = Portfolio::latest()->get(); 
         $latest_reservation = Reservation::whereNotNull('photo_before')->latest()->first();
-        return view('reservasi.index', compact('services', 'latest_reservation'));
+        
+        return view('reservasi.index', compact('services', 'latest_reservation', 'portfolios'));
     }
 
     public function store(Request $request)
@@ -114,7 +111,14 @@ class ReservationController extends Controller
         }
     }
 
-    // --- HALAMAN ADMIN ---
+    public function adminIndex()
+    {
+        $reservations = Reservation::with('service')->orderBy('created_at', 'desc')->get();
+        $services = Service::all(); 
+        $portfolios = Portfolio::latest()->get(); 
+        
+        return view('reservasi.admin', compact('reservations', 'services', 'portfolios'));
+    }
 
     public function updateStatus(Request $request, $id)
     {
@@ -142,6 +146,36 @@ class ReservationController extends Controller
         return redirect()->back()->with('success', 'Status & Foto diperbarui!');
     }
 
+    public function storePortfolio(Request $request)
+    {
+        $request->validate([
+            'judul' => 'nullable|string|max:255',
+            'gambar' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        if ($request->hasFile('gambar')) {
+            $path = $request->file('gambar')->store('portfolio', 'public');
+            Portfolio::create([
+                'judul' => $request->judul,
+                'gambar' => $path,
+            ]);
+            return redirect()->back()->with('success', 'Foto portfolio keren berhasil ditambah!');
+        }
+
+        return redirect()->back()->with('error', 'Gagal mengunggah gambar.');
+    }
+
+    public function destroyPortfolio($id)
+    {
+        $item = Portfolio::findOrFail($id);
+        if ($item->gambar) {
+            Storage::disk('public')->delete($item->gambar);
+        }
+        $item->delete();
+
+        return redirect()->back()->with('success', 'Foto portfolio telah dihapus.');
+    }
+
     private function sendWhatsappFonnte($res)
     {
         $token = env('FONNTE_TOKEN');
@@ -167,13 +201,6 @@ class ReservationController extends Controller
         return redirect()->back()->with('success', 'Terima kasih!');
     }
 
-    public function adminIndex()
-    {
-        $reservations = Reservation::with('service')->orderBy('created_at', 'desc')->get();
-        $services = Service::all(); 
-        return view('reservasi.admin', compact('reservations', 'services'));
-    }
-
     public function destroy($id)
     {
         $res = Reservation::findOrFail($id);
@@ -184,7 +211,6 @@ class ReservationController extends Controller
         return redirect()->back()->with('success', 'Data dihapus.');
     }
 
-    // --- SERVICE & EXPENSE ---
     public function storeService(Request $request) { Service::create($request->all()); return redirect()->back()->with('success', 'Layanan ditambah!'); }
     public function updateService(Request $request, $id) { Service::findOrFail($id)->update($request->all()); return redirect()->back()->with('success', 'Layanan diupdate!'); }
     public function destroyService($id) { Service::destroy($id); return redirect()->back()->with('success', 'Layanan dihapus.'); }
@@ -221,9 +247,6 @@ class ReservationController extends Controller
         return view('reservasi.owner', compact('totalPendapatan', 'totalPengeluaran', 'keuntunganBersih', 'totalSepatu', 'statusPending', 'statusProses', 'statusSelesai', 'latestTransactions', 'latestExpenses', 'chartData'));
     }
 
-    /**
-     * DOWNLOAD PDF - Sudah sinkron dengan pdf.blade.php
-     */
     public function downloadPDF()
     {
         $reservations = Reservation::with('service')->get();
@@ -233,24 +256,36 @@ class ReservationController extends Controller
 
         $pdf = Pdf::loadView('reservasi.pdf', [
             'reservations' => $reservations,
-            'total' => $totalOmzet, // Variabel ini WAJIB ada sesuai file blade kamu
+            'total' => $totalOmzet,
             'totalPengeluaran' => $totalPengeluaran,
             'keuntunganBersih' => $keuntunganBersih,
             'date' => Carbon::now()->format('d/m/Y')
         ])->setOptions([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true // Memungkinkan loading gambar/css via URL
+            'isRemoteEnabled' => true 
         ]);
 
         return $pdf->download('Laporan-Nature-Clean-'.date('Y-m-d').'.pdf');
     }
 
+    /**
+     * PERBAIKAN FINAL SEARCH STATUS
+     */
     public function searchStatus(Request $request)
     {
+        // Gunakan 'search' karena di file Blade kamu name input-nya adalah "search"
+        $keyword = $request->input('search');
+
+        // Cari pesanan berdasarkan nomor WA, ambil yang paling baru
         $reservation = null;
-        if ($request->filled('search')) {
-            $reservation = Reservation::where('nomor_wa', $request->search)->orderBy('created_at', 'desc')->first();
+        if ($keyword) {
+            $reservation = Reservation::where('nomor_wa', $keyword)
+                            ->with('service')
+                            ->latest()
+                            ->first();
         }
+        
+        // Kirim $reservation ke view (satuan, sesuai kebutuhan if($reservation) di Blade kamu)
         return view('reservasi.check-status', compact('reservation'));
     }
 }

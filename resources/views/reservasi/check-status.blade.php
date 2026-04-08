@@ -3,144 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cek Status | Nature Clean</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Status Sepatu | Nature Clean</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f8f5f2; }
-        .card-search { border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .btn-brown { background-color: #6F4E37; color: white; border-radius: 10px; border: none; }
-        .btn-brown:hover { background-color: #533a29; color: white; }
-        .status-box { padding: 25px; border-radius: 15px; background-color: white; border-left: 5px solid #6F4E37; }
-        .review-section { background-color: #fffaf5; border-radius: 15px; padding: 20px; border: 1px dashed #6F4E37; }
-        .text-brown { color: #6F4E37; }
+        :root {
+            --deep-brown: #533a29;
+            --primary-brown: #6F4E37;
+            --soft-cream: #f8f5f2;
+            --warm-white: #ffffff;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            /* Background lebih coklat hangat dan elegan */
+            background: linear-gradient(135deg, #eaddcf 0%, #d2b48c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .status-container {
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .card-status {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 25px 50px rgba(83, 58, 41, 0.15);
+            overflow: hidden;
+        }
+
+        .card-header-aesthetic {
+            background-color: var(--deep-brown);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+            border-radius: 0 0 50px 50px;
+        }
+
+        .status-badge-main {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .status-pending { background: #f39c12; color: white; }
+        .status-proses { background: #3498db; color: white; }
+        .status-selesai { background: #27ae60; color: white; }
+
+        .info-group {
+            padding: 30px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(111, 78, 55, 0.1);
+        }
+
+        .detail-item:last-child { border-bottom: none; }
+
+        .label-text {
+            color: var(--primary-brown);
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+
+        .value-text {
+            color: var(--deep-brown);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .review-box {
+            background: var(--primary-brown);
+            margin: 20px;
+            padding: 25px;
+            border-radius: 30px;
+            color: white;
+        }
+
+        .btn-review {
+            background: white;
+            color: var(--deep-brown);
+            border: none;
+            font-weight: 700;
+            border-radius: 15px;
+            padding: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-review:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: var(--soft-cream);
+        }
+
+        .back-nav {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .back-nav a {
+            color: var(--deep-brown);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .back-nav a:hover { opacity: 0.7; }
+
+        /* Progress Animation */
+        .pulse-icon {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container mt-5 pb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="text-center mb-4">
-                <h3 class="fw-bold" style="color: #6F4E37;">Tracking Pesanan</h3>
-                <p class="text-muted">Masukkan nomor WhatsApp untuk cek status sepatu Anda</p>
-            </div>
-
-            @if(session('success'))
-                <div class="alert alert-success border-0 shadow-sm mb-4">{{ session('success') }}</div>
-            @endif
-            @if(session('error'))
-                <div class="alert alert-danger border-0 shadow-sm mb-4">{{ session('error') }}</div>
-            @endif
-
-            <div class="card card-search p-4 mb-4">
-                <form action="{{ route('reservasi.status') }}" method="GET">
-                    <div class="input-group">
-                        <input type="text" name="search" class="form-control" placeholder="Contoh: 081234567xxx" value="{{ request('search') }}" required>
-                        <button class="btn btn-brown px-4" type="submit">Cari</button>
-                    </div>
-                </form>
-            </div>
-
-            @if(request('search'))
-                @if($reservation)
-                    <div class="status-box shadow-sm mb-4 animate__animated animate__fadeIn">
-                        <h5 class="fw-bold mb-3">Halo, {{ $reservation->nama_pelanggan }}!</h5>
-                        
-                        <div class="row small text-muted mb-2">
-                            <div class="col-6">ID Pesanan:</div>
-                            <div class="col-6 text-end fw-bold text-dark">#{{ $reservation->id }}</div>
-                        </div>
-                        <div class="row small text-muted mb-2">
-                            <div class="col-6">Layanan:</div>
-                            <div class="col-6 text-end fw-bold text-dark">{{ $reservation->jenis_layanan }} ({{ $reservation->jumlah_sepatu }} Pasang)</div>
-                        </div>
-                        <div class="row small text-muted mb-2">
-                            <div class="col-6">Total Harga:</div>
-                            <div class="col-6 text-end fw-bold text-success">Rp {{ number_format($reservation->total_harga, 0, ',', '.') }}</div>
-                        </div>
-
-                        <div class="row small text-muted mb-2">
-                            <div class="col-6">Status Pembayaran:</div>
-                            <div class="col-6 text-end">
-                                @if($reservation->status_pembayaran == 'Paid')
-                                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> LUNAS</span>
-                                @else
-                                    <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i> BELUM BAYAR</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <hr>
-                        
-                        <div class="text-center py-2">
-                            <p class="mb-1 small text-muted">Status Pengerjaan:</p>
-                            <h4 class="fw-bold text-uppercase" style="color: #6F4E37;">
-                                @if($reservation->status == 'pending') 🕒 PENDING
-                                @elseif($reservation->status == 'proses') ⚡ PROSES
-                                @elseif($reservation->status == 'selesai') ✅ SELESAI
-                                @else ❌ BATAL
-                                @endif
-                            </h4>
-                            
-                            @if($reservation->status == 'pending')
-                                <p class="small text-muted mt-2"><i class="fas fa-info-circle me-1"></i> Mohon antar sepatu Anda ke workshop kami agar segera diproses.</p>
-                            @elseif($reservation->status == 'proses')
-                                <p class="small text-muted mt-2"><i class="fas fa-spinner fa-spin me-1"></i> Sepatu Anda sedang dikerjakan dengan hati-hati oleh tim kami.</p>
-                            @elseif($reservation->status == 'selesai')
-                                <p class="small text-success mt-2 fw-bold"><i class="fas fa-check-circle me-1"></i> Sepatu Anda sudah bersih mengkilap dan siap diambil!</p>
-                            @endif
-                        </div>
-                    </div>
-
-                    @if($reservation->status == 'selesai')
-                        <div class="review-section shadow-sm animate__animated animate__fadeInUp">
-                            <h6 class="fw-bold text-brown mb-3 text-center"><i class="fas fa-star me-2"></i>Berikan Ulasan Anda</h6>
-                            
-                            @if($reservation->rating)
-                                <div class="text-center">
-                                    <div class="mb-2">
-                                        @for($i=1; $i<=5; $i++)
-                                            <i class="fas fa-star {{ $i <= $reservation->rating ? 'text-warning' : 'text-muted' }}"></i>
-                                        @endfor
-                                    </div>
-                                    <p class="small fst-italic text-muted">"{{ $reservation->testimoni }}"</p>
-                                    <span class="badge bg-success small" style="font-size: 0.7rem;">Terima kasih atas ulasannya!</span>
-                                </div>
-                            @else
-                                <form action="{{ route('reservasi.review', $reservation->id) }}" method="POST">
-                                    @csrf
-                                    <div class="mb-3">
-                                        <label class="form-label small fw-bold">Seberapa puas Anda?</label>
-                                        <select name="rating" class="form-select form-select-sm" required>
-                                            <option value="5">⭐⭐⭐⭐⭐ Sangat Puas</option>
-                                            <option value="4">⭐⭐⭐⭐ Puas</option>
-                                            <option value="3">⭐⭐⭐ Cukup</option>
-                                            <option value="2">⭐⭐ Kurang</option>
-                                            <option value="1">⭐ Buruk</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small fw-bold">Tulis Komentar</label>
-                                        <textarea name="testimoni" class="form-control form-control-sm" rows="3" placeholder="Contoh: Sepatu jadi seperti baru lagi! Terima kasih Nature Clean..." required></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-brown w-100 fw-bold btn-sm py-2">Kirim Ulasan</button>
-                                </form>
-                            @endif
-                        </div>
+<div class="container">
+    <div class="status-container">
+        
+        @if($reservation)
+        <div class="card-status animate__animated animate__fadeInUp">
+            <div class="card-header-aesthetic">
+                <div class="mb-3">
+                    @if($reservation->status == 'pending')
+                        <i class="far fa-clock fa-3x pulse-icon"></i>
+                    @elseif($reservation->status == 'proses')
+                        <i class="fas fa-sync fa-3x fa-spin"></i>
+                    @else
+                        <i class="fas fa-check-double fa-3x"></i>
                     @endif
-
-                @else
-                    <div class="alert alert-warning text-center border-0 shadow-sm">
-                        <i class="fas fa-exclamation-triangle me-2"></i> Data tidak ditemukan. Pastikan nomor WhatsApp yang dimasukkan sudah benar.
-                    </div>
-                @endif
-            @endif
-
-            <div class="text-center mt-4">
-                <a href="{{ route('reservasi.index') }}" class="text-decoration-none text-muted small"><i class="fas fa-arrow-left me-1"></i> Kembali ke Beranda</a>
+                </div>
+                <h4 class="fw-bold mb-1">Halo, {{ explode(' ', $reservation->nama_pelanggan)[0] }}!</h4>
+                <p class="small opacity-75 mb-3">Pesanan #{{ $reservation->id }}</p>
+                
+                <div class="status-badge-main 
+                    @if($reservation->status == 'pending') status-pending 
+                    @elseif($reservation->status == 'proses') status-proses 
+                    @else status-selesai @endif">
+                    {{ $reservation->status }}
+                </div>
             </div>
+
+            <div class="info-group">
+                <div class="detail-item">
+                    <span class="label-text">LAYANAN</span>
+                    <span class="value-text">{{ $reservation->jenis_layanan }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label-text">JUMLAH</span>
+                    <span class="value-text">{{ $reservation->jumlah_sepatu }} Pasang</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label-text">TOTAL TAGIHAN</span>
+                    <span class="value-text text-success">Rp {{ number_format($reservation->total_harga, 0, ',', '.') }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label-text">PEMBAYARAN</span>
+                    <span class="badge rounded-pill {{ $reservation->status_pembayaran == 'Paid' ? 'bg-success' : 'bg-danger' }}">
+                        {{ $reservation->status_pembayaran == 'Paid' ? 'LUNAS' : 'BELUM BAYAR' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="px-4 pb-4 text-center">
+                @if($reservation->status == 'pending')
+                    <p class="text-muted small italic">"Segera antar sepatu Anda ke workshop kami untuk mulai dibersihkan."</p>
+                @elseif($reservation->status == 'proses')
+                    <p class="text-muted small italic">"Sepatu Anda sedang diproses dengan teliti oleh tim ahli kami."</p>
+                @elseif($reservation->status == 'selesai')
+                    <p class="text-success small fw-bold">"Sepatu Anda sudah bersih mengkilap dan siap dijemput!"</p>
+                @endif
+            </div>
+
+            @if($reservation->status == 'selesai' && !$reservation->rating)
+                <div class="review-box animate__animated animate__pulse animate__infinite">
+                    <h6 class="fw-bold text-center mb-3">Puas dengan hasilnya?</h6>
+                    <form action="{{ route('reservasi.review', $reservation->id) }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <select name="rating" class="form-select border-0 shadow-none" style="border-radius: 10px;">
+                                <option value="5">⭐⭐⭐⭐⭐ Sangat Puas</option>
+                                <option value="4">⭐⭐⭐⭐ Puas</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-review w-100">Beri Ulasan Sekarang</button>
+                    </form>
+                </div>
+            @endif
+        </div>
+        @else
+        <div class="card-status p-5 text-center">
+            <i class="fas fa-search fa-4x mb-4 text-muted opacity-25"></i>
+            <h5 class="fw-bold text-brown">Pesanan Tidak Ditemukan</h5>
+            <p class="text-muted">Pastikan nomor yang Anda masukkan di depan sudah terdaftar.</p>
+            <a href="{{ route('reservasi.index') }}" class="btn btn-brown text-white mt-3" style="background: var(--primary-brown); border-radius: 15px;">Kembali</a>
+        </div>
+        @endif
+
+        <div class="back-nav">
+            <a href="{{ route('reservasi.index') }}">
+                <i class="fas fa-arrow-left me-2"></i> Kembali ke Beranda
+            </a>
         </div>
     </div>
 </div>
