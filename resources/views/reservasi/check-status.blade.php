@@ -18,7 +18,6 @@
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            /* Background lebih coklat hangat dan elegan */
             background: linear-gradient(135deg, #eaddcf 0%, #d2b48c 100%);
             min-height: 100vh;
             display: flex;
@@ -90,12 +89,22 @@
             font-size: 1rem;
         }
 
+        /* Review Box Enhanced */
         .review-box {
             background: var(--primary-brown);
             margin: 20px;
             padding: 25px;
             border-radius: 30px;
             color: white;
+            box-shadow: 0 10px 20px rgba(83, 58, 41, 0.2);
+        }
+
+        .form-control-aesthetic {
+            border-radius: 15px;
+            border: none;
+            padding: 12px 15px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
         }
 
         .btn-review {
@@ -103,6 +112,7 @@
             color: var(--deep-brown);
             border: none;
             font-weight: 700;
+            font-size: 1rem;
             border-radius: 15px;
             padding: 12px;
             transition: all 0.3s;
@@ -129,7 +139,6 @@
 
         .back-nav a:hover { opacity: 0.7; }
 
-        /* Progress Animation */
         .pulse-icon {
             animation: pulse 2s infinite;
         }
@@ -200,19 +209,40 @@
                 @endif
             </div>
 
-            @if($reservation->status == 'selesai' && !$reservation->rating)
+            {{-- FORM TESTIMONI BARU --}}
+            @if($reservation->status == 'selesai' && !$reservation->testimoni)
                 <div class="review-box animate__animated animate__pulse animate__infinite">
-                    <h6 class="fw-bold text-center mb-3">Puas dengan hasilnya?</h6>
+                    <h6 class="fw-bold text-center mb-3 text-white">Bagaimana hasil cuci kami?</h6>
                     <form action="{{ route('reservasi.review', $reservation->id) }}" method="POST">
                         @csrf
-                        <div class="mb-3">
-                            <select name="rating" class="form-select border-0 shadow-none" style="border-radius: 10px;">
+                        <div class="mb-2">
+                            <label class="small mb-1 fw-bold opacity-75">Rating Bintang:</label>
+                            <select name="rating" class="form-select border-0 shadow-none mb-3" style="border-radius: 15px;">
                                 <option value="5">⭐⭐⭐⭐⭐ Sangat Puas</option>
                                 <option value="4">⭐⭐⭐⭐ Puas</option>
+                                <option value="3">⭐⭐⭐ Cukup</option>
+                                <option value="2">⭐⭐ Kurang</option>
+                                <option value="1">⭐ Buruk</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-review w-100">Beri Ulasan Sekarang</button>
+                        <div class="mb-3">
+                            <label class="small mb-1 fw-bold opacity-75">Pesan / Kesan:</label>
+                            <textarea name="testimoni" class="form-control border-0 shadow-none" 
+                                      style="border-radius: 15px;" rows="3" 
+                                      placeholder="Contoh: Sepatunya jadi kayak baru lagi! Adminnya ramah banget..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-review w-100">Kirim Testimoni</button>
                     </form>
+                </div>
+            @elseif($reservation->testimoni)
+                <div class="px-4 pb-4 text-center">
+                    <div class="p-3 bg-light rounded-4 border">
+                        <p class="mb-1 small fw-bold text-brown">Testimoni Anda:</p>
+                        <p class="small italic text-muted mb-0">"{{ $reservation->testimoni }}"</p>
+                        <div class="mt-2">
+                            @for($i=1; $i<=$reservation->rating; $i++) ⭐ @endfor
+                        </div>
+                    </div>
                 </div>
             @endif
         </div>
@@ -220,7 +250,7 @@
         <div class="card-status p-5 text-center">
             <i class="fas fa-search fa-4x mb-4 text-muted opacity-25"></i>
             <h5 class="fw-bold text-brown">Pesanan Tidak Ditemukan</h5>
-            <p class="text-muted">Pastikan nomor yang Anda masukkan di depan sudah terdaftar.</p>
+            <p class="text-muted">Pastikan nomor ID pesanan Anda benar.</p>
             <a href="{{ route('reservasi.index') }}" class="btn btn-brown text-white mt-3" style="background: var(--primary-brown); border-radius: 15px;">Kembali</a>
         </div>
         @endif

@@ -33,7 +33,7 @@ return new class extends Migration
             $table->string('status_pembayaran')->default('unpaid'); // unpaid, paid, expired, failed
             $table->string('snap_token')->nullable(); // Menyimpan token dari Midtrans
             
-            // --- Fitur Rating & Testimoni (Agar tidak error saat diakses di Controller) ---
+            // --- Fitur Rating & Testimoni (Sudah Terintegrasi Langsung) ---
             $table->integer('rating')->nullable();
             $table->text('testimoni')->nullable();
 

@@ -24,6 +24,10 @@ class ReservationController extends Controller
         Config::$is3ds = true;
     }
 
+    /**
+     * MIDTRANS CALLBACK
+     * Menangani konfirmasi pembayaran otomatis dari Midtrans
+     */
     public function callback(Request $request)
     {
         $serverKey = env('MIDTRANS_SERVER_KEY');
@@ -44,6 +48,9 @@ class ReservationController extends Controller
         return response()->json(['status' => 'Signature Invalid'], 403);
     }
 
+    /**
+     * HALAMAN DEPAN (PELANGGAN)
+     */
     public function index()
     {
         $services = Service::all();
@@ -53,6 +60,9 @@ class ReservationController extends Controller
         return view('reservasi.index', compact('services', 'latest_reservation', 'portfolios'));
     }
 
+    /**
+     * SIMPAN RESERVASI BARU & GENERATE PEMBAYARAN
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -111,6 +121,9 @@ class ReservationController extends Controller
         }
     }
 
+    /**
+     * DASHBOARD ADMIN
+     */
     public function adminIndex()
     {
         $reservations = Reservation::with('service')->orderBy('created_at', 'desc')->get();
@@ -120,6 +133,9 @@ class ReservationController extends Controller
         return view('reservasi.admin', compact('reservations', 'services', 'portfolios'));
     }
 
+    /**
+     * UPDATE STATUS & FOTO PROGRESS (ADMIN)
+     */
     public function updateStatus(Request $request, $id)
     {
         $res = Reservation::findOrFail($id);
@@ -139,6 +155,7 @@ class ReservationController extends Controller
 
         $res->save();
 
+        // Kirim WA jika status berubah jadi SELESAI
         if ($oldStatus !== 'selesai' && $res->status === 'selesai') {
             $this->sendWhatsappFonnte($res);
         }
@@ -147,7 +164,7 @@ class ReservationController extends Controller
     }
 
     /**
-     * FIX: Fungsi simpan portfolio agar kolom 'gambar' terisi
+     * MANAJEMEN PORTFOLIO
      */
     public function storePortfolio(Request $request)
     {
@@ -157,16 +174,14 @@ class ReservationController extends Controller
         ]);
 
         if ($request->hasFile('gambar')) {
-            // Simpan file fisik
             $path = $request->file('gambar')->store('portfolio', 'public');
             
-            // Simpan ke database dengan kolom 'gambar'
             Portfolio::create([
                 'judul' => $request->judul,
                 'gambar' => $path,
             ]);
 
-            return redirect()->back()->with('success', 'Foto portfolio keren berhasil ditambah!');
+            return redirect()->back()->with('success', 'Foto portfolio berhasil ditambah!');
         }
 
         return redirect()->back()->with('error', 'Gagal mengunggah gambar.');
@@ -175,19 +190,20 @@ class ReservationController extends Controller
     public function destroyPortfolio($id)
     {
         $item = Portfolio::findOrFail($id);
-        if ($item->gambar) {
-            Storage::disk('public')->delete($item->gambar);
-        }
+        if ($item->gambar) Storage::disk('public')->delete($item->gambar);
         $item->delete();
 
         return redirect()->back()->with('success', 'Foto portfolio telah dihapus.');
     }
 
+    /**
+     * NOTIFIKASI WHATSAPP (FONNTE)
+     */
     private function sendWhatsappFonnte($res)
     {
         $token = env('FONNTE_TOKEN');
         $target = preg_replace('/[^0-9]/', '', $res->nomor_wa);
-        $message = "Halo *{$res->nama_pelanggan}*,\n\nSepatu Anda *#{$res->id}* telah *SELESAI* ✨\n\nSilakan diambil. Terima kasih!";
+        $message = "Halo *{$res->nama_pelanggan}*,\n\nSepatu Anda *#{$res->id}* telah *SELESAI* ✨\n\nSilakan diambil ke workshop Nature Clean. Terima kasih!";
 
         try {
             Http::withHeaders(['Authorization' => $token])->post('https://api.fonnte.com/send', [
@@ -199,29 +215,59 @@ class ReservationController extends Controller
         }
     }
 
+    /**
+     * SIMPAN ULASAN & TESTIMONI (PELANGGAN)
+     */
     public function storeReview(Request $request, $id)
     {
-        $request->validate(['rating' => 'required|integer|min:1|max:5', 'testimoni' => 'required|string|max:500']);
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5', 
+            'testimoni' => 'required|string|max:500'
+        ]);
+
         $res = Reservation::findOrFail($id);
-        if ($res->status !== 'selesai' || $res->rating) return redirect()->back()->with('error', 'Gagal kirim ulasan.');
-        $res->update(['rating' => $request->rating, 'testimoni' => $request->testimoni]);
-        return redirect()->back()->with('success', 'Terima kasih!');
+        
+        // Cek jika status belum selesai atau ulasan sudah pernah dikirim
+        if ($res->status !== 'selesai' || $res->testimoni) {
+            return redirect()->back()->with('error', 'Ulasan tidak bisa dikirim.');
+        }
+
+        $res->update([
+            'rating' => $request->rating, 
+            'testimoni' => $request->testimoni
+        ]);
+
+        return redirect()->back()->with('success', 'Terima kasih atas testimoninya!');
     }
 
+    /**
+     * HAPUS DATA RESERVASI (ADMIN)
+     */
     public function destroy($id)
     {
         $res = Reservation::findOrFail($id);
+        
+        // Kembalikan kuota layanan jika dihapus
         if ($res->service) $res->service->increment('kuota', $res->jumlah_sepatu);
+        
+        // Hapus file foto terkait
         if($res->photo_before) Storage::disk('public')->delete($res->photo_before);
         if($res->photo_after) Storage::disk('public')->delete($res->photo_after);
+        
         $res->delete();
-        return redirect()->back()->with('success', 'Data dihapus.');
+        return redirect()->back()->with('success', 'Data reservasi dihapus.');
     }
 
+    /**
+     * CRUD LAYANAN
+     */
     public function storeService(Request $request) { Service::create($request->all()); return redirect()->back()->with('success', 'Layanan ditambah!'); }
     public function updateService(Request $request, $id) { Service::findOrFail($id)->update($request->all()); return redirect()->back()->with('success', 'Layanan diupdate!'); }
     public function destroyService($id) { Service::destroy($id); return redirect()->back()->with('success', 'Layanan dihapus.'); }
 
+    /**
+     * CATAT PENGELUARAN (OWNER)
+     */
     public function storeExpense(Request $request)
     {
         $request->validate(['nama_pengeluaran' => 'required', 'jumlah' => 'required|numeric', 'tanggal' => 'required']);
@@ -229,31 +275,39 @@ class ReservationController extends Controller
         return redirect()->back()->with('success', 'Pengeluaran dicatat!');
     }
 
+    /**
+     * DASHBOARD OWNER (LAPORAN)
+     */
     public function ownerDashboard()
     {
         $totalPendapatan = Reservation::where('status', 'selesai')->sum('total_harga');
         $totalPengeluaran = Expense::sum('jumlah');
         $keuntunganBersih = $totalPendapatan - $totalPengeluaran;
         $totalSepatu = Reservation::where('status', 'selesai')->sum('jumlah_sepatu');
+        
         $statusPending = Reservation::where('status', 'pending')->count();
         $statusProses = Reservation::where('status', 'proses')->count();
         $statusSelesai = Reservation::where('status', 'selesai')->count();
+        
         $latestTransactions = Reservation::with('service')->latest()->take(5)->get();
         $latestExpenses = Expense::latest()->take(5)->get();
 
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i)->format('Y-m-d');
-            $daily = Reservation::whereDate('created_at', $date)->where('status', 'selesai')->pluck('total_harga');
+            $daily = Reservation::whereDate('created_at', $date)->where('status', 'selesai')->sum('total_harga');
             $chartData[] = [
                 'x' => $date,
-                'y' => [$daily->first() ?? 0, $daily->max() ?? 0, $daily->min() ?? 0, $daily->last() ?? 0]
+                'y' => (int)$daily
             ];
         }
 
         return view('reservasi.owner', compact('totalPendapatan', 'totalPengeluaran', 'keuntunganBersih', 'totalSepatu', 'statusPending', 'statusProses', 'statusSelesai', 'latestTransactions', 'latestExpenses', 'chartData'));
     }
 
+    /**
+     * EXPORT LAPORAN PDF
+     */
     public function downloadPDF()
     {
         $reservations = Reservation::with('service')->get();
@@ -275,6 +329,9 @@ class ReservationController extends Controller
         return $pdf->download('Laporan-Nature-Clean-'.date('Y-m-d').'.pdf');
     }
 
+    /**
+     * SEARCH STATUS PESANAN (PELANGGAN)
+     */
     public function searchStatus(Request $request)
     {
         $keyword = $request->input('search');
