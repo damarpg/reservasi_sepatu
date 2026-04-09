@@ -25,6 +25,7 @@
             color: #3E2723; 
             font-weight: 600; 
             scroll-behavior: smooth;
+            overflow-x: hidden;
         }
 
         h1, h2, h3, h4, h5, h6, .navbar-brand, .nav-link, .btn, label { font-weight: 800 !important; }
@@ -60,6 +61,8 @@
             border: 12px solid white;
             border-radius: 40px;
             box-shadow: var(--soft-shadow);
+            max-height: 500px;
+            object-fit: cover;
         }
 
         .glass-card {
@@ -93,7 +96,7 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1); border: 10px solid #fff;
         }
         .ba-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .ba-before { z-index: 2; border-right: 4px solid #fff; overflow: hidden; }
+        .ba-before { z-index: 2; border-right: 4px solid #fff; overflow: hidden; width: 50%; }
         .ba-input {
             position: absolute; -webkit-appearance: none; appearance: none; width: 100%; height: 100%;
             background: transparent; outline: none; z-index: 10; cursor: ew-resize; top: 0;
@@ -103,6 +106,7 @@
             border-radius: 15px; padding: 14px; border: 1px solid rgba(93, 64, 55, 0.1);
             background-color: #fcfaf8;
         }
+
         .accordion-item { border: none; margin-bottom: 15px; border-radius: 20px !important; overflow: hidden; box-shadow: var(--soft-shadow); }
         .accordion-button { font-weight: 800; background-color: white; padding: 20px; }
         .accordion-button:not(.collapsed) { background-color: var(--accent-tan); color: var(--primary-brown); }
@@ -117,9 +121,6 @@
             transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-decoration: none;
         }
         .floating-wa:hover { transform: scale(1.1) rotate(10deg); background: #25D366; color: white; }
-
-        .hover-scale { transition: 0.3s; }
-        .hover-scale:hover { transform: scale(1.2); color: var(--primary-brown) !important; }
     </style>
 </head>
 <body>
@@ -129,23 +130,24 @@
         <a class="navbar-brand fs-3 text-brown" href="#">
             <i class="fas fa-leaf me-2" style="color: var(--primary-brown)"></i>NATURE<span style="color: var(--secondary-brown)">CLEAN.</span>
         </a>
-        <div class="d-flex align-items-center gap-3">
+        
+        <div class="d-flex align-items-center gap-2">
             <button class="btn btn-outline-brown px-4 d-none d-md-block" data-bs-toggle="modal" data-bs-target="#modalLacak">
                 <i class="fas fa-search me-2"></i>Lacak Pesanan
             </button>
             
             <div class="dropdown">
-                <button class="btn btn-brown px-4" type="button" data-bs-toggle="dropdown">
+                <button class="btn btn-brown px-4" type="button" id="dropdownAccess" data-bs-toggle="dropdown" aria-expanded="false">
                     Access <i class="fas fa-chevron-down ms-1 small"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2 rounded-4">
-                    {{-- Pengecekan apakah user sudah login atau belum --}}
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2 rounded-4" aria-labelledby="dropdownAccess">
                     @auth
                         @if(Auth::user()->role == 'admin')
-                            <li><a class="dropdown-item py-2 rounded-3 fw-bold text-success" href="{{ route('admin.index') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard Admin</a></li>
-                        @else
+                            <li><a class="dropdown-item py-2 rounded-3 fw-bold text-primary" href="{{ route('admin.index') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard Admin</a></li>
+                        @elseif(Auth::user()->role == 'owner')
                             <li><a class="dropdown-item py-2 rounded-3 fw-bold text-success" href="{{ route('owner.index') }}"><i class="fas fa-chart-line me-2"></i>Dashboard Owner</a></li>
                         @endif
+                        
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form action="{{ route('logout') }}" method="POST">
@@ -154,8 +156,8 @@
                             </form>
                         </li>
                     @else
-                        <li><a class="dropdown-item py-2 rounded-3" href="{{ route('login') }}?role=admin"><i class="fas fa-user-shield me-2"></i>Admin Panel</a></li>
-                        <li><a class="dropdown-item py-2 rounded-3 text-brown" href="{{ route('login') }}?role=owner"><i class="fas fa-store me-2"></i>Owner Dashboard</a></li>
+                        <li><a class="dropdown-item py-2 rounded-3 fw-bold" href="{{ route('login') }}?role=admin"><i class="fas fa-user-shield me-2 text-primary"></i>Login Admin</a></li>
+                        <li><a class="dropdown-item py-2 rounded-3 fw-bold" href="{{ route('login') }}?role=owner"><i class="fas fa-store me-2 text-success"></i>Login Owner</a></li>
                     @endauth
                 </ul>
             </div>
@@ -163,11 +165,19 @@
     </div>
 </nav>
 
-{{-- Notifikasi Error/Success --}}
 @if(session('error'))
 <div class="container mt-3">
     <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0" role="alert">
         <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+@endif
+
+@if(session('success'))
+<div class="container mt-3">
+    <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0" role="alert">
+        <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 </div>
@@ -202,6 +212,7 @@
     <section class="py-5" data-aos="fade-up">
         <div class="text-center mb-5">
             <h2 class="section-title">Bukti Nyata Perawatan</h2>
+            <p>Geser slider untuk melihat hasil sebelum dan sesudah.</p>
         </div>
         <div class="ba-wrapper shadow-lg">
             <img src="{{ asset('storage/' . $latest_reservation->photo_after) }}" class="ba-img">
@@ -326,62 +337,84 @@
     </section>
 
     <section class="py-5">
-        <div class="text-center mb-5"><h2 class="section-title">Apa Kata Mereka?</h2></div>
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">Apa Kata Mereka?</h2>
+        </div>
         <div class="row g-4">
-            <div class="col-md-4" data-aos="fade-up">
-                <div class="bg-white p-4 rounded-4 shadow-sm border-bottom border-4 border-brown">
-                    <div class="text-warning mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p class="fst-italic opacity-75">"Sepatu putih saya yang sudah kuning balik jadi kayak baru lagi! Benar-benar magic."</p>
-                    <h6 class="mb-0 text-brown">- Andi S.</h6>
+            @forelse($testimonials ?? [] as $t)
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
+                    <div class="bg-white p-4 rounded-4 shadow-sm border-bottom border-4 border-brown h-100">
+                        <div class="text-warning mb-2">
+                            @for($i = 1; $i <= 5; $i++)
+                                <i class="fas fa-star {{ $i <= $t->rating ? '' : 'opacity-25' }}"></i>
+                            @endfor
+                        </div>
+                        <p class="fst-italic opacity-75">"{{ $t->pesan }}"</p>
+                        <h6 class="mb-0 text-brown">- {{ $t->nama_pelanggan }}</h6>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="bg-white p-4 rounded-4 shadow-sm border-bottom border-4 border-brown">
-                    <div class="text-warning mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p class="fst-italic opacity-75">"Suka banget sama konsep organiknya, aman buat suede mahal saya. Workshopnya juga bersih."</p>
-                    <h6 class="mb-0 text-brown">- Rina M.</h6>
+            @empty
+                <div class="col-12 text-center py-5">
+                    <div class="glass-card d-inline-block p-4" style="border: 1px dashed var(--accent-tan);">
+                        <p class="mb-0 text-muted">Belum ada testimoni dari pelanggan.</p>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="bg-white p-4 rounded-4 shadow-sm border-bottom border-4 border-brown">
-                    <div class="text-warning mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                    <p class="fst-italic opacity-75">"Layanan antar jemputnya on-time banget. Sangat memudahkan buat yang sibuk kerja."</p>
-                    <h6 class="mb-0 text-brown">- Budi K.</h6>
+            @endforelse
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">Sering Ditanyakan</h2>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8" data-aos="fade-up">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#f1">
+                                Berapa lama proses pencucian?
+                            </button>
+                        </h2>
+                        <div id="f1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body opacity-75">
+                                Umumnya memakan waktu 2-4 hari kerja tergantung tingkat kesulitan dan jenis layanan yang dipilih.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">
+                                Apakah melayani antar jemput?
+                            </button>
+                        </h2>
+                        <div id="f2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body opacity-75">
+                                Ya! Kami menyediakan layanan antar jemput khusus area Surabaya dengan biaya yang disesuaikan jarak.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f3">
+                                Apakah aman untuk sepatu branded?
+                            </button>
+                        </h2>
+                        <div id="f3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body opacity-75">
+                                Sangat aman. Kami menggunakan cairan pembersih organik premium dan teknik khusus untuk setiap jenis material (Suede, Leather, Canvas, dsb).
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <div class="row g-5 py-5">
-        <div class="col-lg-6" data-aos="fade-right">
-            <h3 class="mb-4">Tips Merawat Sepatu</h3>
-            <div class="glass-card">
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> <span>Jangan jemur langsung di bawah matahari agar warna tidak pudar.</span></li>
-                    <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> <span>Gunakan silica gel di dalam kotak untuk mencegah jamur.</span></li>
-                    <li class="d-flex align-items-start"><i class="fas fa-check-circle text-brown me-3 mt-1"></i> <span>Lakukan deep cleaning minimal 1 bulan sekali untuk menjaga material.</span></li>
-                </ul>
-            </div>
-        </div>
-        <div class="col-lg-6" data-aos="fade-left">
-            <h3 class="mb-4">FAQ</h3>
-            <div class="accordion" id="faqAccordion">
-                <div class="accordion-item shadow-sm">
-                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f1">Berapa lama pengerjaan?</button></h2>
-                    <div id="f1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Rata-rata 2-4 hari kerja tergantung antrean dan jenis layanan yang dipilih.</div></div>
-                </div>
-                <div class="accordion-item shadow-sm">
-                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">Apakah ada garansi?</button></h2>
-                    <div id="f2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">Ya, kami memberikan garansi cuci ulang gratis jika hasil tidak bersih maksimal (klaim 1x24 jam).</div></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <section class="py-5" data-aos="zoom-in">
         <div class="text-center mb-5"><h2 class="section-title">Kunjungi Workshop Kami</h2></div>
         <div class="map-container">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.5683244848675!2d112.71630137456722!3d-7.289793171646279!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fb9725f77861%3A0x6e788c634c7b887a!2sJl.%20Dukuh%20Kupang%20XVII%20No.35%2C%20Dukuh%20Kupang%2C%20Kec.%20Dukuhpakis%2C%20Surabaya%2C%20Jawa%20Timur%2060225!5e0!3m2!1sid!2sid!4v1705542831234!5m2!1sid!2sid" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.691924840816!2d112.71618131477503!3d-7.275841494748348!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7f95022630561%3A0xe54d68e2f89c8a14!2sJl.%20Dukuh%20Kupang%20XVII%20No.35%2C%20Dukuh%20Kupang%2C%20Kec.%20Dukuhpakis%2C%20Kota%20SBY%2C%20Jawa%20Timur%2060225!5e0!3m2!1sid!2sid!4v1700000000000!5m2!1sid!2sid" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
         </div>
     </section>
 
@@ -395,19 +428,16 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 bg-white">
-                <p class="small opacity-75 mb-4">Masukkan Nomor WhatsApp yang terdaftar untuk melihat progres pencucian sepatu Anda.</p>
+                <p class="small opacity-75 mb-4">Masukkan Nomor WhatsApp yang terdaftar.</p>
                 <form action="{{ route('reservasi.status') }}" method="GET">
                     <div class="input-group mb-3 bg-light rounded-4 p-1">
                         <span class="input-group-text border-0 bg-transparent text-brown"><i class="fab fa-whatsapp"></i></span>
-                        <input type="text" name="search" class="form-control border-0 bg-transparent py-3" placeholder="Contoh: 081234567xxx" required>
+                        <input type="text" name="search" class="form-control border-0 bg-transparent py-3" placeholder="Contoh: 0812..." required>
                     </div>
                     <button type="submit" class="btn btn-brown w-100 py-3 rounded-4 shadow-sm">
                         Cek Status Sekarang <i class="fas fa-search ms-2"></i>
                     </button>
                 </form>
-            </div>
-            <div class="modal-footer border-0 bg-light justify-content-center py-3">
-                <span class="small">Butuh bantuan cepat? <a href="https://wa.me/6281236016773" class="text-brown fw-bold text-decoration-none">Hubungi Admin</a></span>
             </div>
         </div>
     </div>
@@ -418,14 +448,7 @@
         <h4 class="text-brown mb-3">NATURECLEAN.</h4>
         <p class="small opacity-75 mb-4">Workshop: Dukuh Kupang 17 Nomor 35, Surabaya<br>
         WhatsApp: 0812-3601-6773 | Email: hello@natureclean.id</p>
-        
-        <div class="d-flex justify-content-center gap-4 mb-4">
-            <a href="#" class="text-brown fs-4 hover-scale"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="text-brown fs-4 hover-scale"><i class="fab fa-tiktok"></i></a>
-            <a href="https://wa.me/6281236016773" class="text-brown fs-4 hover-scale"><i class="fab fa-whatsapp"></i></a>
-        </div>
-        
-        <p class="small mb-0 text-muted">© 2026 Nature Clean Premium Shoe Care. Dibuat dengan ❤️ di Surabaya.</p>
+        <p class="small mb-0 text-muted">© 2026 Nature Clean Premium Shoe Care.</p>
     </div>
 </footer>
 
@@ -445,6 +468,7 @@
     const calcTotalDisplay = document.getElementById('calc-total');
 
     function calculate() {
+        if(!calcService || !calcQty) return;
         const price = parseInt(calcService.value) || 0;
         const qty = parseInt(calcQty.value) || 0;
         calcTotalDisplay.innerText = 'Rp ' + (price * qty).toLocaleString('id-ID');
@@ -452,7 +476,6 @@
 
     if(calcService) calcService.addEventListener('change', calculate);
     if(calcQty) calcQty.addEventListener('input', calculate);
-    window.addEventListener('load', calculate);
 
     const slider = document.getElementById('ba-slider');
     const beforeContainer = document.getElementById('before-container');
@@ -465,12 +488,11 @@
         }
     }
 
+    window.addEventListener('load', () => { syncWidth(); calculate(); });
+    window.addEventListener('resize', syncWidth);
     if(slider) {
-        window.addEventListener('load', syncWidth);
-        window.addEventListener('resize', syncWidth);
         slider.addEventListener('input', (e) => {
             beforeContainer.style.width = e.target.value + '%';
-            syncWidth();
         });
     }
 </script>

@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Log;
 use Midtrans\Config; 
 use Midtrans\Snap;
 
@@ -18,6 +19,7 @@ class ReservationController extends Controller
 {
     public function __construct()
     {
+        // Konfigurasi Midtrans
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized = true;
@@ -134,20 +136,30 @@ class ReservationController extends Controller
     }
 
     /**
-     * UPDATE STATUS & FOTO PROGRESS (ADMIN)
+     * UPDATE STATUS, PEMBAYARAN & FOTO PROGRESS (ADMIN)
      */
     public function updateStatus(Request $request, $id)
     {
         $res = Reservation::findOrFail($id);
         $oldStatus = $res->status;
 
-        if ($request->has('status')) $res->status = $request->status;
+        // Update Status Pengerjaan
+        if ($request->has('status')) {
+            $res->status = $request->status;
+        }
 
+        // Update Status Pembayaran (Manual)
+        if ($request->has('status_pembayaran')) {
+            $res->status_pembayaran = $request->status_pembayaran;
+        }
+
+        // Update Foto Before
         if ($request->hasFile('photo_before')) {
             if ($res->photo_before) Storage::disk('public')->delete($res->photo_before);
             $res->photo_before = $request->file('photo_before')->store('progress', 'public');
         }
 
+        // Update Foto After
         if ($request->hasFile('photo_after')) {
             if ($res->photo_after) Storage::disk('public')->delete($res->photo_after);
             $res->photo_after = $request->file('photo_after')->store('progress', 'public');
@@ -155,12 +167,12 @@ class ReservationController extends Controller
 
         $res->save();
 
-        // Kirim WA jika status berubah jadi SELESAI
+        // Notifikasi WA jika selesai
         if ($oldStatus !== 'selesai' && $res->status === 'selesai') {
             $this->sendWhatsappFonnte($res);
         }
 
-        return redirect()->back()->with('success', 'Status & Foto diperbarui!');
+        return redirect()->back()->with('success', 'Data reservasi berhasil diperbarui!');
     }
 
     /**
@@ -175,15 +187,12 @@ class ReservationController extends Controller
 
         if ($request->hasFile('gambar')) {
             $path = $request->file('gambar')->store('portfolio', 'public');
-            
             Portfolio::create([
                 'judul' => $request->judul,
                 'gambar' => $path,
             ]);
-
             return redirect()->back()->with('success', 'Foto portfolio berhasil ditambah!');
         }
-
         return redirect()->back()->with('error', 'Gagal mengunggah gambar.');
     }
 
@@ -192,7 +201,6 @@ class ReservationController extends Controller
         $item = Portfolio::findOrFail($id);
         if ($item->gambar) Storage::disk('public')->delete($item->gambar);
         $item->delete();
-
         return redirect()->back()->with('success', 'Foto portfolio telah dihapus.');
     }
 
@@ -211,7 +219,7 @@ class ReservationController extends Controller
                 'message' => $message,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Fonnte Error: ' . $e->getMessage());
+            Log::error('Fonnte Error: ' . $e->getMessage());
         }
     }
 
@@ -226,8 +234,6 @@ class ReservationController extends Controller
         ]);
 
         $res = Reservation::findOrFail($id);
-        
-        // Cek jika status belum selesai atau ulasan sudah pernah dikirim
         if ($res->status !== 'selesai' || $res->testimoni) {
             return redirect()->back()->with('error', 'Ulasan tidak bisa dikirim.');
         }
@@ -246,11 +252,8 @@ class ReservationController extends Controller
     public function destroy($id)
     {
         $res = Reservation::findOrFail($id);
-        
-        // Kembalikan kuota layanan jika dihapus
         if ($res->service) $res->service->increment('kuota', $res->jumlah_sepatu);
         
-        // Hapus file foto terkait
         if($res->photo_before) Storage::disk('public')->delete($res->photo_before);
         if($res->photo_after) Storage::disk('public')->delete($res->photo_after);
         
@@ -296,10 +299,7 @@ class ReservationController extends Controller
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i)->format('Y-m-d');
             $daily = Reservation::whereDate('created_at', $date)->where('status', 'selesai')->sum('total_harga');
-            $chartData[] = [
-                'x' => $date,
-                'y' => (int)$daily
-            ];
+            $chartData[] = ['x' => $date, 'y' => (int)$daily];
         }
 
         return view('reservasi.owner', compact('totalPendapatan', 'totalPengeluaran', 'keuntunganBersih', 'totalSepatu', 'statusPending', 'statusProses', 'statusSelesai', 'latestTransactions', 'latestExpenses', 'chartData'));
@@ -342,7 +342,6 @@ class ReservationController extends Controller
                             ->latest()
                             ->first();
         }
-        
         return view('reservasi.check-status', compact('reservation'));
     }
 }

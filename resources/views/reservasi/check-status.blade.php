@@ -89,7 +89,6 @@
             font-size: 1rem;
         }
 
-        /* Review Box Enhanced */
         .review-box {
             background: var(--primary-brown);
             margin: 20px;
@@ -97,14 +96,6 @@
             border-radius: 30px;
             color: white;
             box-shadow: 0 10px 20px rgba(83, 58, 41, 0.2);
-        }
-
-        .form-control-aesthetic {
-            border-radius: 15px;
-            border: none;
-            padding: 12px 15px;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
         }
 
         .btn-review {
@@ -120,7 +111,6 @@
 
         .btn-review:hover {
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             background: var(--soft-cream);
         }
 
@@ -134,10 +124,7 @@
             text-decoration: none;
             font-weight: 600;
             font-size: 0.9rem;
-            transition: 0.3s;
         }
-
-        .back-nav a:hover { opacity: 0.7; }
 
         .pulse-icon {
             animation: pulse 2s infinite;
@@ -174,7 +161,7 @@
                     @if($reservation->status == 'pending') status-pending 
                     @elseif($reservation->status == 'proses') status-proses 
                     @else status-selesai @endif">
-                    {{ $reservation->status }}
+                    {{ strtoupper($reservation->status) }}
                 </div>
             </div>
 
@@ -191,10 +178,16 @@
                     <span class="label-text">TOTAL TAGIHAN</span>
                     <span class="value-text text-success">Rp {{ number_format($reservation->total_harga, 0, ',', '.') }}</span>
                 </div>
+                
+                {{-- PERBAIKAN LOGIKA STATUS PEMBAYARAN --}}
                 <div class="detail-item">
-                    <span class="label-text">PEMBAYARAN</span>
-                    <span class="badge rounded-pill {{ $reservation->status_pembayaran == 'Paid' ? 'bg-success' : 'bg-danger' }}">
-                        {{ $reservation->status_pembayaran == 'Paid' ? 'LUNAS' : 'BELUM BAYAR' }}
+                    <span class="label-text">STATUS PEMBAYARAN</span>
+                    @php
+                        // Menyeragamkan pengecekan (case-insensitive)
+                        $isPaid = in_array(strtolower($reservation->status_pembayaran), ['paid', 'lunas', 'success']);
+                    @endphp
+                    <span class="badge rounded-pill {{ $isPaid ? 'bg-success' : 'bg-danger' }}">
+                        {{ $isPaid ? 'LUNAS' : 'BELUM BAYAR' }}
                     </span>
                 </div>
             </div>
@@ -209,7 +202,7 @@
                 @endif
             </div>
 
-            {{-- FORM TESTIMONI BARU --}}
+            {{-- FORM TESTIMONI --}}
             @if($reservation->status == 'selesai' && !$reservation->testimoni)
                 <div class="review-box animate__animated animate__pulse animate__infinite">
                     <h6 class="fw-bold text-center mb-3 text-white">Bagaimana hasil cuci kami?</h6>
@@ -229,7 +222,7 @@
                             <label class="small mb-1 fw-bold opacity-75">Pesan / Kesan:</label>
                             <textarea name="testimoni" class="form-control border-0 shadow-none" 
                                       style="border-radius: 15px;" rows="3" 
-                                      placeholder="Contoh: Sepatunya jadi kayak baru lagi! Adminnya ramah banget..." required></textarea>
+                                      placeholder="Berikan ulasan Anda..." required></textarea>
                         </div>
                         <button type="submit" class="btn btn-review w-100">Kirim Testimoni</button>
                     </form>
@@ -237,7 +230,7 @@
             @elseif($reservation->testimoni)
                 <div class="px-4 pb-4 text-center">
                     <div class="p-3 bg-light rounded-4 border">
-                        <p class="mb-1 small fw-bold text-brown">Testimoni Anda:</p>
+                        <p class="mb-1 small fw-bold" style="color: var(--primary-brown)">Testimoni Anda:</p>
                         <p class="small italic text-muted mb-0">"{{ $reservation->testimoni }}"</p>
                         <div class="mt-2">
                             @for($i=1; $i<=$reservation->rating; $i++) ⭐ @endfor
@@ -249,9 +242,9 @@
         @else
         <div class="card-status p-5 text-center">
             <i class="fas fa-search fa-4x mb-4 text-muted opacity-25"></i>
-            <h5 class="fw-bold text-brown">Pesanan Tidak Ditemukan</h5>
-            <p class="text-muted">Pastikan nomor ID pesanan Anda benar.</p>
-            <a href="{{ route('reservasi.index') }}" class="btn btn-brown text-white mt-3" style="background: var(--primary-brown); border-radius: 15px;">Kembali</a>
+            <h5 class="fw-bold">Pesanan Tidak Ditemukan</h5>
+            <p class="text-muted">Nomor WA atau ID tidak terdaftar.</p>
+            <a href="{{ route('reservasi.index') }}" class="btn text-white mt-3" style="background: var(--primary-brown); border-radius: 15px;">Kembali</a>
         </div>
         @endif
 
