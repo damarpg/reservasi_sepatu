@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Auth;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,10 +20,24 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // 2. Mengecualikan route Midtrans dari pengecekan CSRF
-        // Agar Midtrans bisa mengirim data 'Paid' ke website kamu
         $middleware->validateCsrfTokens(except: [
             'midtrans/callback', 
         ]);
+
+        // 3. LOGIKA REDIRECT SETELAH REFRESH/LOGIN
+        // Ini yang mencegah Owner nyasar ke Dashboard Admin
+        $middleware->redirectTo(
+            guests: '/login',
+            users: function () {
+                $user = Auth::user();
+                if ($user && $user->role === 'admin') {
+                    return '/admin';
+                } elseif ($user && $user->role === 'owner') {
+                    return '/owner';
+                }
+                return '/'; // Default jika role tidak dikenal
+            }
+        );
 
     })
     ->withExceptions(function (Exceptions $exceptions) {

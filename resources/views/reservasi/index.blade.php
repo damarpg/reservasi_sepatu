@@ -261,7 +261,7 @@
                              alt="Portfolio"
                              onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Nature+Clean';">
                         <div class="portfolio-overlay">
-                            <h5 class="text-white mb-0">Transformasi Sepatu</h5>
+                            <h5 class="text-white mb-0">{{ $p->judul ?? 'Transformasi Sepatu' }}</h5>
                             <small class="text-white-50">Deep Cleaning Premium</small>
                         </div>
                     </div>
@@ -285,6 +285,7 @@
                     <div class="mb-3">
                         <label class="small mb-2">Pilih Layanan</label>
                         <select id="calc-service" class="form-select border-0 shadow-sm">
+                            <option value="0" selected disabled>-- Pilih Layanan --</option>
                             @foreach($services as $s) 
                                 @if($s->kuota > 0) <option value="{{ $s->harga }}">{{ $s->nama_layanan }}</option> @endif 
                             @endforeach
@@ -349,7 +350,7 @@
                                 <i class="fas fa-star {{ $i <= $t->rating ? '' : 'opacity-25' }}"></i>
                             @endfor
                         </div>
-                        <p class="fst-italic opacity-75">"{{ $t->pesan }}"</p>
+                        <p class="fst-italic opacity-75">"{{ $t->testimoni }}"</p>
                         <h6 class="mb-0 text-brown">- {{ $t->nama_pelanggan }}</h6>
                     </div>
                 </div>
@@ -414,7 +415,7 @@
     <section class="py-5" data-aos="zoom-in">
         <div class="text-center mb-5"><h2 class="section-title">Kunjungi Workshop Kami</h2></div>
         <div class="map-container">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.691924840816!2d112.71618131477503!3d-7.275841494748348!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7f95022630561%3A0xe54d68e2f89c8a14!2sJl.%20Dukuh%20Kupang%20XVII%20No.35%2C%20Dukuh%20Kupang%2C%20Kec.%20Dukuhpakis%2C%20Kota%20SBY%2C%20Jawa%20Timur%2060225!5e0!3m2!1sid!2sid!4v1700000000000!5m2!1sid!2sid" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.5684666991953!2d112.71618057588321!3d-7.289785871644788!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fb905470d979%3A0x6b6d51d5208f24b2!2sDukuh%20Kupang%20XVII%20No.35%2C%20Dukuh%20Pakis%2C%20Kec.%20Dukuhpakis%2C%20Surabaya%2C%20Jawa%20Timur%2060225!5e0!3m2!1sid!2sid!4v1705663189012!5m2!1sid!2sid" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
         </div>
     </section>
 
@@ -463,6 +464,7 @@
         document.getElementById('alamat-section').classList.toggle('d-none', tipe === 'toko');
     }
 
+    // Simulasi Biaya Logic
     const calcService = document.getElementById('calc-service');
     const calcQty = document.getElementById('calc-qty');
     const calcTotalDisplay = document.getElementById('calc-total');
@@ -477,6 +479,7 @@
     if(calcService) calcService.addEventListener('change', calculate);
     if(calcQty) calcQty.addEventListener('input', calculate);
 
+    // Before After Slider Logic
     const slider = document.getElementById('ba-slider');
     const beforeContainer = document.getElementById('before-container');
     const beforeImg = document.getElementById('before-img');
@@ -488,8 +491,12 @@
         }
     }
 
-    window.addEventListener('load', () => { syncWidth(); calculate(); });
+    window.addEventListener('load', () => { 
+        syncWidth(); 
+        calculate(); 
+    });
     window.addEventListener('resize', syncWidth);
+    
     if(slider) {
         slider.addEventListener('input', (e) => {
             beforeContainer.style.width = e.target.value + '%';
