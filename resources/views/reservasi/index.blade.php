@@ -188,7 +188,7 @@
         <div class="row align-items-center">
             <div class="col-lg-6 text-center text-lg-start" data-aos="fade-right">
                 <div class="d-inline-block bg-white shadow-sm border rounded-pill px-3 py-1 mb-3">
-                    <small class="text-brown"><i class="fas fa-star me-2 text-warning"></i>#1 Premium Shoe Care Surabaya</small>
+                    <small class="text-brown"><i class="fas fa-star me-2 text-warning"></i>Muhammad Nur Pua Geno 22120048</small>
                 </div>
                 <h1 class="display-3 mb-3">Kembalikan <span style="color: var(--primary-brown)">Kilau Mewah</span> Sepatu Anda.</h1>
                 <p class="lead mb-4 opacity-75">Perawatan eksklusif menggunakan formula organik yang aman bagi material sensitif dan ramah lingkungan.</p>
