@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LaporanController; // Import Controller Laporan
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -15,12 +16,14 @@ use Illuminate\Support\Facades\Artisan;
 Route::get('/', [ReservationController::class, 'index'])->name('reservasi.index');
 Route::post('/reservasi/store', [ReservationController::class, 'store'])->name('reservasi.store');
 
-/** * FITUR TRACKING (CEK STATUS)
+/**
+ * FITUR TRACKING (CEK STATUS)
  */
 Route::get('/cek-status', [ReservationController::class, 'searchStatus'])->name('reservasi.status');
 Route::get('/lacak-pesanan', [ReservationController::class, 'searchStatus'])->name('reservasi.track');
 
-/** * FITUR RATING & TESTIMONI
+/**
+ * FITUR RATING & TESTIMONI
  */
 Route::post('/reservasi/review/{id}', [ReservationController::class, 'storeReview'])->name('reservasi.review');
 
@@ -38,13 +41,12 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
 
     // --- HALAMAN ADMIN (Akses: Admin) ---
-    // Pastikan middleware 'isAdmin' kamu sudah mengecek role == 'admin'
     Route::middleware('isAdmin')->prefix('admin')->group(function () {
         
         // Dashboard Utama Admin
         Route::get('/dashboard', [ReservationController::class, 'adminIndex'])->name('admin.index');
         
-        /** * UPDATE STATUS & FOTO PROGRESS  */
+        /** * UPDATE STATUS & FOTO PROGRESS */
         Route::patch('/reservation/{id}', [ReservationController::class, 'updateStatus'])->name('admin.update');
         
         // Hapus Data Reservasi (Database & File Storage)
@@ -61,42 +63,45 @@ Route::middleware('auth')->group(function () {
     });
 
     // --- HALAMAN OWNER (Akses: Owner) ---
-    // Pastikan middleware 'isOwner' kamu sudah mengecek role == 'owner'
     Route::middleware('isOwner')->prefix('owner')->group(function () {
         
-        // Dashboard Khusus Owner (Laporan Keuangan & Grafik)
+        // Dashboard Khusus Owner (Menampilkan Statistik & Grafik)
         Route::get('/dashboard', [ReservationController::class, 'ownerDashboard'])->name('owner.index');
         
-        /** * MANAJEMEN PENGELUARAN */
+        /** * FITUR LAPORAN OTOMATIS (Sesuai Permintaan Dosen) 
+         * Menggunakan LaporanController
+         */
+        Route::get('/laporan', [LaporanController::class, 'index'])->name('owner.laporan.index');
+        Route::get('/laporan/cetak', [LaporanController::class, 'cetak'])->name('owner.laporan.cetak');
+        
+        /** * MANAJEMEN PENGELUARAN 
+         */
         Route::post('/expense', [ReservationController::class, 'storeExpense'])->name('owner.storeExpense');
         
-        // Fitur ekspor laporan ke PDF
+        /**
+         * LEGACY PDF (Tombol PDF Merah di dashboard tetap berfungsi)
+         */
         Route::get('/download-pdf', [ReservationController::class, 'downloadPDF'])->name('owner.pdf');
     });
 
 });
 
 /**
- * FIX GAMBAR 404 DI RAILWAY
- * Jalankan route ini satu kali setelah deploy: namadomain.railway.app/fix-storage
+ * FIX GAMBAR 404 DI SERVER (RAILWAY/HOSTING)
  */
 Route::get('/fix-storage', function () {
     try {
-        // Perbaikan: Gunakan perintah shell untuk hapus folder jika symlink rusak (Khusus Linux/Railway)
         $publicStoragePath = public_path('storage');
         
         if (is_link($publicStoragePath)) {
             unlink($publicStoragePath);
         } elseif (file_exists($publicStoragePath)) {
-            // Jika folder asli bukan link, kita rename/hapus (hati-hati di lokal)
-            // Di Railway biasanya ini perlu dihapus agar link baru bisa dibuat
             exec('rm -rf ' . escapeshellarg($publicStoragePath));
         }
         
-        // Membuat link baru
         Artisan::call('storage:link');
         
-        return "Berhasil! Storage link telah diperbarui di Railway. Silakan cek gambar kembali.";
+        return "Berhasil! Storage link telah diperbarui. Silakan cek gambar kembali.";
     } catch (\Exception $e) {
         return "Gagal: " . $e->getMessage();
     }

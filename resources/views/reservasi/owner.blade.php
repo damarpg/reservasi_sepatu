@@ -29,11 +29,9 @@
             letter-spacing: -0.02em;
         }
 
-        /* --- Global Boldness --- */
         h1, h2, h3, h4, h5, h6, .fw-bold, .btn, th { font-weight: 800 !important; }
-        p, .text-muted, td, label, input { font-weight: 700; }
+        p, .text-muted, td, label, input, select { font-weight: 700; }
 
-        /* --- Sidebar Aesthetic --- */
         .sidebar { 
             background-color: var(--sidebar-dark); 
             color: white; 
@@ -75,7 +73,6 @@
             transform: scale(1.02);
         }
 
-        /* --- Compact Stat Cards --- */
         .stat-card { 
             border: 1px solid var(--card-border); 
             border-radius: 20px; 
@@ -83,7 +80,6 @@
             transition: 0.3s;
             box-shadow: var(--soft-shadow);
         }
-        .stat-card:hover { transform: translateY(-5px); }
         
         .icon-box { 
             width: 45px; height: 45px; 
@@ -96,23 +92,12 @@
         .bg-expense { background: #fef2f2; color: #dc2626; }
         .bg-profit { background: #eff6ff; color: #2563eb; }
 
-        /* --- Chart & Table Styling --- */
         .card-main {
             border-radius: 24px;
             border: 1px solid var(--card-border);
             background: white;
             box-shadow: var(--soft-shadow);
             overflow: hidden;
-        }
-        
-        .table thead th {
-            background-color: #fafaf9;
-            padding: 12px 15px;
-            color: var(--primary);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid var(--card-border);
         }
         
         .btn-brown-bold {
@@ -134,8 +119,7 @@
             text-transform: uppercase;
         }
 
-        /* Form styling */
-        .form-control {
+        .form-control, .form-select {
             border-radius: 12px;
             border: 2px solid #F1F1F1;
             padding: 10px 15px;
@@ -149,15 +133,15 @@
         <div class="col-md-2 sidebar d-none d-md-block shadow">
             <div class="profile-section">
                 <img src="https://ui-avatars.com/api/?name=Owner+Nature&background=8D6E63&color=fff" alt="Profile" class="profile-img">
-                <h6 class="mb-0">OWNER NATURE</h6>
-                <small class="opacity-50" style="font-size: 0.7rem; letter-spacing: 1px;">EXECUTIVE</small>
+                <h6 class="mb-0 text-white">OWNER NATURE</h6>
+                <small class="opacity-50 text-white" style="font-size: 0.7rem; letter-spacing: 1px;">EXECUTIVE</small>
             </div>
             
-            <p class="small opacity-50 px-2 mb-2" style="font-size: 0.65rem; font-weight: 800;">MENU UTAMA</p>
+            <p class="small opacity-50 px-2 mb-2 text-white" style="font-size: 0.65rem; font-weight: 800;">MENU UTAMA</p>
             <a href="{{ route('owner.index') }}" class="nav-link-custom active"><i class="fas fa-chart-pie me-2"></i> Dashboard</a>
             <a href="{{ route('admin.index') }}" class="nav-link-custom"><i class="fas fa-clipboard-list me-2"></i> Kelola Order</a>
             
-            <p class="small opacity-50 px-2 mt-4 mb-2" style="font-size: 0.65rem; font-weight: 800;">AKSES</p>
+            <p class="small opacity-50 px-2 mt-4 mb-2 text-white" style="font-size: 0.65rem; font-weight: 800;">AKSES</p>
             <a href="{{ route('reservasi.index') }}" class="nav-link-custom"><i class="fas fa-home me-2"></i> Landing Page</a>
             
             <div class="mt-5 pt-5">
@@ -178,12 +162,37 @@
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-brown-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExpense">
-                        <i class="fas fa-plus-circle me-1"></i> Catat Pengeluaran
+                        <i class="fas fa-plus-circle me-1"></i> Catat Biaya
                     </button>
-                    <a href="{{ route('owner.pdf') }}" class="btn btn-white bg-white border border-danger text-danger fw-bold rounded-pill px-3 shadow-sm d-flex align-items-center" style="font-size: 0.85rem;">
-                        <i class="fas fa-file-pdf me-2"></i> PDF
-                    </a>
                 </div>
+            </div>
+
+            <div class="card card-main p-4 mb-4 border-0" style="background: var(--accent); color: white;">
+                <h5 class="mb-3 text-white"><i class="fas fa-print me-2"></i> Cetak Laporan Otomatis</h5>
+                <form action="{{ route('owner.laporan.cetak') }}" method="GET" target="_blank" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="small fw-bold mb-1">Pilih Kategori Laporan</label>
+                        <select name="kategori" class="form-select border-0 shadow-sm">
+                            <option value="pemasukan">Laporan Pemasukan</option>
+                            <option value="pengeluaran">Laporan Pengeluaran</option>
+                            <option value="pelanggan">Laporan Data Pelanggan</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small fw-bold mb-1">Periode Waktu</label>
+                        <select name="filter" class="form-select border-0 shadow-sm">
+                            <option value="semua">Semua Data</option>
+                            <option value="harian">Hari Ini</option>
+                            <option value="mingguan">Minggu Ini</option>
+                            <option value="bulanan">Bulan Ini</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-white bg-white text-dark fw-bold w-100 rounded-pill border-0 shadow py-2">
+                            <i class="fas fa-file-pdf text-danger me-2"></i> Generate & Print Laporan
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <div class="row g-3 mb-4">
