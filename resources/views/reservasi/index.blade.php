@@ -188,10 +188,10 @@
         <div class="row align-items-center">
             <div class="col-lg-6 text-center text-lg-start" data-aos="fade-right">
                 <div class="d-inline-block bg-white shadow-sm border rounded-pill px-3 py-1 mb-3">
-                    <small class="text-brown"><i class="fas fa-star me-2 text-warning"></i>Muhammad Nur Pua Geno 22120048</small>
+                    <small class="text-brown"><i class="fas fa-star me-2 text-warning"></i>Dipercaya sejak 2021</small>
                 </div>
-                <h1 class="display-3 mb-3">Kembalikan <span style="color: var(--primary-brown)">Kilau Mewah</span> Sepatu Anda.</h1>
-                <p class="lead mb-4 opacity-75">Perawatan eksklusif menggunakan formula organik yang aman bagi material sensitif dan ramah lingkungan.</p>
+                <h1 class="display-3 mb-3">Reservasi <span style="color: var(--primary-brown)">Jasa Cuci</span> Sepatu Berbasis Web.</h1>
+                <p class="lead mb-4 opacity-75">MUHAMMAD NUR PUA GENO 22120048.</p>
                 <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
                     <a href="#booking" class="btn btn-brown btn-lg px-4 shadow-lg">Booking Sekarang</a>
                     <a href="#portfolio" class="btn btn-outline-brown btn-lg px-4">Lihat Hasil <i class="fas fa-arrow-right ms-2"></i></a>
