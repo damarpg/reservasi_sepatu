@@ -51,7 +51,6 @@ class ReservationController extends Controller
 
     /**
      * HALAMAN DEPAN (PELANGGAN)
-     * PERBAIKAN: Menambahkan pengambilan data Testimoni
      */
     public function index()
     {
@@ -131,14 +130,16 @@ class ReservationController extends Controller
 
     /**
      * DASHBOARD ADMIN
+     * PERBAIKAN: Menambahkan pengambilan data Expense ($expenses) agar muncul di tabel admin
      */
     public function adminIndex()
     {
         $reservations = Reservation::with('service')->orderBy('created_at', 'desc')->get();
         $services = Service::all(); 
         $portfolios = Portfolio::latest()->get(); 
-        
-        return view('reservasi.admin', compact('reservations', 'services', 'portfolios'));
+        $expenses = Expense::latest()->get(); // <-- Penambahan baris ini
+
+        return view('reservasi.admin', compact('reservations', 'services', 'portfolios', 'expenses'));
     }
 
     /**
@@ -210,6 +211,7 @@ class ReservationController extends Controller
             Http::withHeaders(['Authorization' => $token])->post('https://api.fonnte.com/send', [
                 'target' => $target,
                 'message' => $message,
+                'where' => ['whatsapp' => true]
             ]);
         } catch (\Exception $e) {
             Log::error('Fonnte Error: ' . $e->getMessage());
@@ -228,7 +230,6 @@ class ReservationController extends Controller
 
         $res = Reservation::findOrFail($id);
         
-        // Validasi: Hanya bisa isi testimoni kalau status sudah 'selesai'
         if ($res->status !== 'selesai') {
             return redirect()->back()->with('error', 'Pesanan belum selesai, belum bisa memberi ulasan.');
         }
@@ -259,13 +260,49 @@ class ReservationController extends Controller
     public function destroyService($id) { Service::destroy($id); return redirect()->back()->with('success', 'Layanan dihapus.'); }
 
     /**
-     * CATAT PENGELUARAN (OWNER)
+     * CATAT PENGELUARAN (ADMIN/OWNER)
+     * PERBAIKAN: Menambahkan validasi lengkap & penanganan upload file foto_nota
      */
     public function storeExpense(Request $request)
     {
-        $request->validate(['nama_pengeluaran' => 'required', 'jumlah' => 'required|numeric', 'tanggal' => 'required']);
-        Expense::create($request->all());
-        return redirect()->back()->with('success', 'Pengeluaran dicatat!');
+        $request->validate([
+            'nama_pengeluaran' => 'required|string|max:255',
+            'jumlah'           => 'required|numeric',
+            'tanggal'          => 'required|date',
+            'keterangan'       => 'nullable|string',
+            'foto_nota'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $path = null;
+        if ($request->hasFile('foto_nota')) {
+            $path = $request->file('foto_nota')->store('notas', 'public');
+        }
+
+        Expense::create([
+            'nama_pengeluaran' => $request->nama_pengeluaran,
+            'jumlah'           => $request->jumlah,
+            'tanggal'          => $request->tanggal,
+            'keterangan'       => $request->keterangan,
+            'foto_nota'        => $path,
+        ]);
+
+        return redirect()->back()->with('success', 'Catatan pengeluaran berhasil disimpan!');
+    }
+
+    /**
+     * HAPUS DATA PENGELUARAN (ADMIN)
+     * PERBAIKAN: Menambahkan fungsi hapus data pengeluaran beserta file fisik fotonya
+     */
+    public function destroyExpense($id)
+    {
+        $expense = Expense::findOrFail($id);
+        
+        if ($expense->foto_nota) {
+            Storage::disk('public')->delete($expense->foto_nota);
+        }
+        
+        $expense->delete();
+        return redirect()->back()->with('success', 'Catatan biaya berhasil dihapus!');
     }
 
     /**

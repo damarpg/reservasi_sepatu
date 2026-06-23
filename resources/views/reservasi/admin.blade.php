@@ -121,6 +121,25 @@
 </nav>
 
 <div class="container pb-5">
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show rounded-4 fw-bold mb-4" role="alert">
+            <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 fw-bold mb-4" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> Ada kesalahan input:
+            <ul class="mb-0 mt-1 small">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="card p-3 border-0">
@@ -162,9 +181,9 @@
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-lg-12">
-            <div class="card mb-4">
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
                 <div class="card-header bg-white p-3 border-0">
                     <h5 class="mb-0"><i class="fas fa-concierge-bell me-2 text-accent"></i>Manajemen Layanan</h5>
                 </div>
@@ -174,7 +193,7 @@
                         <div class="col-md-4"><input type="text" name="nama_layanan" class="form-control form-control-sm" placeholder="Nama Layanan" required></div>
                         <div class="col-md-3"><input type="number" name="harga" class="form-control form-control-sm" placeholder="Harga" required></div>
                         <div class="col-md-2"><input type="number" name="kuota" class="form-control form-control-sm" placeholder="Kuota" required></div>
-                        <div class="col-md-3"><button type="submit" class="btn btn-premium btn-sm w-100">Tambah Layanan</button></div>
+                        <div class="col-md-3"><button type="submit" class="btn btn-premium btn-sm w-100">Tambah</button></div>
                     </form>
                     <div class="table-responsive">
                         <table class="table table-sm">
@@ -209,6 +228,72 @@
             </div>
         </div>
 
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-white p-3 border-0">
+                    <h5 class="mb-0"><i class="fas fa-wallet me-2 text-accent"></i>Pencatatan Biaya (Operasional)</h5>
+                </div>
+                <div class="card-body p-3 pt-0">
+                    <form action="{{ route('admin.expenses.store') }}" method="POST" enctype="multipart/form-data" class="row g-2 mb-3 bg-light p-3 rounded-4">
+                        @csrf
+                        <input type="hidden" name="tanggal" value="{{ date('Y-m-d') }}">
+                        <div class="col-md-4">
+                            <input type="text" name="nama_pengeluaran" class="form-control form-control-sm" placeholder="Keterangan Biaya" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" name="jumlah" class="form-control form-control-sm" placeholder="Nominal (Rp)" required>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="d-flex gap-1">
+                                <input type="file" name="foto_nota" class="form-control form-control-sm" accept="image/*" required>
+                                <button type="submit" class="btn btn-premium btn-sm whitespace-nowrap">Simpan</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Keterangan</th>
+                                    <th>Nominal</th>
+                                    <th>Nota</th>
+                                    <th class="text-end">Hapus</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if(isset($expenses) && $expenses->count() > 0)
+                                    @foreach($expenses as $e)
+                                    <tr>
+                                        <td><span class="small">{{ $e->nama_pengeluaran }}</span></td>
+                                        <td><span class="small">Rp {{ number_format($e->jumlah, 0, ',', '.') }}</span></td>
+                                        <td>
+                                            @if($e->foto_nota)
+                                                <a href="{{ asset('storage/' . $e->foto_nota) }}" target="_blank" class="btn btn-link btn-sm p-0 text-accent">
+                                                    <i class="fas fa-file-invoice fa-lg"></i> Lihat Nota
+                                                </a>
+                                            @else
+                                                <span class="text-muted small">-</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-link btn-sm text-danger p-0" onclick="if(confirm('Hapus biaya ini?')) document.getElementById('del-exp-{{ $e->id }}').submit();"><i class="fas fa-trash"></i></button>
+                                            <form id="del-exp-{{ $e->id }}" action="{{ route('admin.expenses.destroy', $e->id) }}" method="POST" class="d-none">@csrf @method('DELETE')</form>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                @else
+                                    <tr><td colspan="4" class="text-center py-3 text-muted small">Belum ada catatan biaya operasional.</td></tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
         <div class="col-lg-4">
             <div class="card h-100">
                 <div class="card-header bg-white p-3 border-0">
@@ -262,7 +347,6 @@
                                     <td>
                                         <div class="fw-bold">{{ $res->nama_pelanggan }}</div>
                                         <div class="text-muted extra-small"><i class="fab fa-whatsapp text-success me-1"></i>{{ $res->nomor_wa }}</div>
-                                        {{-- MENAMPILKAN ALAMAT DI SINI --}}
                                         <div class="address-text">
                                             <i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ $res->alamat ?? 'Alamat tidak tersedia' }}
                                         </div>

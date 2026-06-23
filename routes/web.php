@@ -41,25 +41,30 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
 
     // --- HALAMAN ADMIN (Akses: Admin) ---
-    Route::middleware('isAdmin')->prefix('admin')->group(function () {
+    // PERBAIKAN: Menambahkan ->name('admin.') agar semua route di dalam group otomatis berawalan 'admin.'
+    Route::middleware('isAdmin')->prefix('admin')->name('admin.')->group(function () {
         
         // Dashboard Utama Admin
-        Route::get('/dashboard', [ReservationController::class, 'adminIndex'])->name('admin.index');
+        Route::get('/dashboard', [ReservationController::class, 'adminIndex'])->name('index');
         
         /** * UPDATE STATUS & FOTO PROGRESS */
-        Route::patch('/reservation/{id}', [ReservationController::class, 'updateStatus'])->name('admin.update');
+        Route::patch('/reservation/{id}', [ReservationController::class, 'updateStatus'])->name('update');
         
         // Hapus Data Reservasi (Database & File Storage)
-        Route::delete('/reservation/{id}', [ReservationController::class, 'destroy'])->name('admin.destroy');
+        Route::delete('/reservation/{id}', [ReservationController::class, 'destroy'])->name('destroy');
 
         // CRUD Jenis Layanan & Kuota
-        Route::post('/services', [ReservationController::class, 'storeService'])->name('admin.services.store');
-        Route::patch('/services/{id}', [ReservationController::class, 'updateService'])->name('admin.services.update');
-        Route::delete('/services/{id}', [ReservationController::class, 'destroyService'])->name('admin.services.destroy');
+        Route::post('/services', [ReservationController::class, 'storeService'])->name('services.store');
+        Route::patch('/services/{id}', [ReservationController::class, 'updateService'])->name('services.update');
+        Route::delete('/services/{id}', [ReservationController::class, 'destroyService'])->name('services.destroy');
 
         /** * MANAJEMEN PORTOFOLIO */
-        Route::post('/portfolio', [ReservationController::class, 'storePortfolio'])->name('admin.portfolio.store');
-        Route::delete('/portfolio/{id}', [ReservationController::class, 'destroyPortfolio'])->name('admin.portfolio.destroy');
+        Route::post('/portfolio', [ReservationController::class, 'storePortfolio'])->name('portfolio.store');
+        Route::delete('/portfolio/{id}', [ReservationController::class, 'destroyPortfolio'])->name('portfolio.destroy');
+
+        /** * MANAJEMEN PENGELUARAN/BIAYA */
+        Route::post('/expenses', [ReservationController::class, 'storeExpense'])->name('expenses.store');
+        Route::delete('/expenses/{id}', [ReservationController::class, 'destroyExpense'])->name('expenses.destroy');
     });
 
     // --- HALAMAN OWNER (Akses: Owner) ---
@@ -73,10 +78,6 @@ Route::middleware('auth')->group(function () {
          */
         Route::get('/laporan', [LaporanController::class, 'index'])->name('owner.laporan.index');
         Route::get('/laporan/cetak', [LaporanController::class, 'cetak'])->name('owner.laporan.cetak');
-        
-        /** * MANAJEMEN PENGELUARAN 
-         */
-        Route::post('/expense', [ReservationController::class, 'storeExpense'])->name('owner.storeExpense');
         
         /**
          * LEGACY PDF (Tombol PDF Merah di dashboard tetap berfungsi)

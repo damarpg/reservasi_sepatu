@@ -160,11 +160,6 @@
                     <h2 class="mb-0" style="color: var(--primary);">Laporan Keuangan</h2>
                     <p class="text-muted small">Ringkasan performa bisnis Nature Clean hari ini.</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-brown-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExpense">
-                        <i class="fas fa-plus-circle me-1"></i> Catat Biaya
-                    </button>
-                </div>
             </div>
 
             <div class="card card-main p-4 mb-4 border-0" style="background: var(--accent); color: white;">
@@ -240,7 +235,7 @@
                 <div class="col-md-6">
                     <div class="card card-main h-100">
                         <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
-                            <h6 class="mb-0 fw-bold text-brown">Pengeluaran Terbaru</h6>
+                            <h6 class="mb-0 fw-bold" style="color: var(--primary);">Pengeluaran Terbaru</h6>
                             <i class="fas fa-arrow-down text-danger"></i>
                         </div>
                         <div class="table-responsive">
@@ -272,7 +267,7 @@
                 <div class="col-md-6">
                     <div class="card card-main h-100">
                         <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
-                            <h6 class="mb-0 fw-bold text-brown">Pemasukan Terbaru</h6>
+                            <h6 class="mb-0 fw-bold" style="color: var(--primary);">Pemasukan Terbaru</h6>
                             <i class="fas fa-arrow-up text-success"></i>
                         </div>
                         <div class="table-responsive">
@@ -284,7 +279,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($latestTransactions as $lt)
+                                    @forelse($latestTransactions as $lt)
                                     <tr>
                                         <td>
                                             <div class="fw-bold">{{ $lt->nama_pelanggan }}</div>
@@ -292,42 +287,15 @@
                                         </td>
                                         <td class="text-success fw-bold">Rp {{ number_format($lt->total_harga, 0, ',', '.') }}</td>
                                     </tr>
-                                    @endforeach
+                                    @empty
+                                    <tr><td colspan="2" class="text-center py-4 opacity-50">Tidak ada data.</td></tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalExpense" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow" style="border-radius: 24px;">
-            <div class="modal-header border-0 p-4 pb-0">
-                <h5 class="fw-bold text-brown">Input Biaya</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('owner.storeExpense') }}" method="POST">
-                @csrf
-                <div class="modal-body p-4 pt-2">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Kategori/Nama</label>
-                        <input type="text" name="nama_pengeluaran" class="form-control" placeholder="Sabun, Listrik, dsb" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Nominal (Rp)</label>
-                        <input type="number" name="jumlah" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Tanggal</label>
-                        <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
-                    </div>
-                    <button type="submit" class="btn btn-brown-bold w-100 py-2 mt-2">Simpan Laporan</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -351,7 +319,7 @@
         dataLabels: { enabled: false },
         stroke: { curve: 'smooth', width: 4 },
         xaxis: { type: 'datetime' },
-        yaxis: { labels: { formatter: (v) => "Rp" + v.toLocaleString('id-ID') } },
+        yaxis: { labels: { formatter: (v) => "Rp " + v.toLocaleString('id-ID') } },
         grid: { borderColor: '#F1F1F1', strokeDashArray: 4 }
     };
     new ApexCharts(document.querySelector("#chart-omzet"), options).render();
